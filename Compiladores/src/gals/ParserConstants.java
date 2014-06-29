@@ -212,7 +212,7 @@ public interface ParserConstants {
                 "Repetição lista identificador inválido",
                 "Declaração de métodos inválido",
                 "Parâmetro formal inválido",
-                "Tipo de meétodo inválido",
+                "Tipo de método inválido",
                 "Repetição de parâmetro inválida",
                 "Repetição de lista de expressão inválida",
                 "Parametro inválido, deve ser ref ou val",
