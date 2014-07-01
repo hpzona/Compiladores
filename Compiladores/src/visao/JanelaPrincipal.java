@@ -42,6 +42,7 @@ public class JanelaPrincipal extends javax.swing.JFrame {
         jTextResultadoDaAnalise = new javax.swing.JTextArea();
         jMenuBar = new javax.swing.JMenuBar();
         jMenuArquivo = new javax.swing.JMenu();
+        jMenuItemNovo = new javax.swing.JMenuItem();
         jMenuItemAbrir = new javax.swing.JMenuItem();
         jMenuItemSalvar = new javax.swing.JMenuItem();
         jSeparator1 = new javax.swing.JPopupMenu.Separator();
@@ -67,6 +68,15 @@ public class JanelaPrincipal extends javax.swing.JFrame {
 
         jMenuArquivo.setMnemonic('A');
         jMenuArquivo.setText("Arquivo");
+
+        jMenuItemNovo.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_N, java.awt.event.InputEvent.CTRL_MASK));
+        jMenuItemNovo.setLabel("Novo");
+        jMenuItemNovo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemNovoActionPerformed(evt);
+            }
+        });
+        jMenuArquivo.add(jMenuItemNovo);
 
         jMenuItemAbrir.setAccelerator(javax.swing.KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_A, java.awt.event.InputEvent.CTRL_MASK));
         jMenuItemAbrir.setText("Abrir");
@@ -206,6 +216,10 @@ public class JanelaPrincipal extends javax.swing.JFrame {
         System.exit(0);
     }//GEN-LAST:event_jMenuItemSairActionPerformed
 
+    private void jMenuItemNovoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNovoActionPerformed
+        jTextCodigo.setText("");
+    }//GEN-LAST:event_jMenuItemNovoActionPerformed
+
     public void mostrarResultadoDaAnalise(String resultado) {
         //Exibe na textArea de saída os resultado da análise
         this.jTextResultadoDaAnalise.setText(resultado);
@@ -221,6 +235,7 @@ public class JanelaPrincipal extends javax.swing.JFrame {
     private javax.swing.JMenuItem jMenuItemAnalisarLexico;
     private javax.swing.JMenuItem jMenuItemAnalisarSemantico;
     private javax.swing.JMenuItem jMenuItemAnalisarSintatico;
+    private javax.swing.JMenuItem jMenuItemNovo;
     private javax.swing.JMenuItem jMenuItemSair;
     private javax.swing.JMenuItem jMenuItemSalvar;
     private javax.swing.JMenu jMenuLexico;
