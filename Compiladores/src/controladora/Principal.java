@@ -2,15 +2,14 @@ package controladora;
 
 import visao.JanelaPrincipal;
 
+// Classe desenvolvida por Lucas e Willian
 public class Principal {
 
     public static void main(String[] args) {
 
-        JanelaPrincipal visao;
+        JanelaPrincipal janelaPrincipal;
 
-        visao = new JanelaPrincipal();
-        visao.interaja();
-
+        janelaPrincipal = new JanelaPrincipal();
+        janelaPrincipal.interaja();
     }
-
 }

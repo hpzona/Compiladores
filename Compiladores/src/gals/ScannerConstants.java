@@ -19,7 +19,7 @@ public interface ScannerConstants {
                 "Caractere não esperado",
                 "",
                 "",
-                "Erro na construcao de um literal",
+                "Erro na construção de um literal",
                 "",
                 "",
                 "",

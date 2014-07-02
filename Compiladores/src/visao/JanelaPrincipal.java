@@ -10,7 +10,7 @@ import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 import javax.swing.filechooser.FileNameExtensionFilter;
 
-
+// Classe desenvolvida por Lucas e Willian
 public class JanelaPrincipal extends javax.swing.JFrame {
 
     AnalisadorLexico analisadorLexico;
@@ -192,11 +192,18 @@ public class JanelaPrincipal extends javax.swing.JFrame {
 
     private void jMenuItemSalvarActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemSalvarActionPerformed
         JFileChooser jFileChooser = new JFileChooser();
-
+        String caminhoCompleto;
+        File arquivo;
+        
         if (jFileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            File arquivo = jFileChooser.getSelectedFile();
+            arquivo = jFileChooser.getSelectedFile();
+            caminhoCompleto = jFileChooser.getSelectedFile().getAbsolutePath();
             try {
-                jTextCodigo.write(new FileWriter(arquivo));
+                if ((caminhoCompleto.endsWith(".txt") || caminhoCompleto.endsWith(".lsi") || caminhoCompleto.endsWith(".TXT") || caminhoCompleto.endsWith(".LSI"))) {
+                    jTextCodigo.write(new FileWriter(arquivo));
+                } else {
+                    JOptionPane.showMessageDialog(null, "É permitido salvar apenas com as extensões .txt ou .lsi");
+                }
             } catch (IOException e) {
                JOptionPane.showMessageDialog(null, "Erro ao salvar arquivo. " + e.getMessage());
             }

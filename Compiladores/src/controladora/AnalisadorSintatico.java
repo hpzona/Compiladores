@@ -7,12 +7,13 @@ import gals.Sintatico;
 import gals.SyntaticError;
 import visao.JanelaPrincipal;
 
+// Classe desenvolvida por Lucas e Willian
 public class AnalisadorSintatico {
 
-    private final JanelaPrincipal jp;
+    private final JanelaPrincipal janelaPrincipal;
 
-    public AnalisadorSintatico(JanelaPrincipal janelaPrincipal) {
-        jp = janelaPrincipal;
+    public AnalisadorSintatico(JanelaPrincipal jP) {
+        this.janelaPrincipal = jP;
     }
 
     public void analisarSintaxe(String codigo) {
@@ -23,12 +24,12 @@ public class AnalisadorSintatico {
 
         try {
             analisadorSintatico.parse(analisadorLexico, null);
-            jp.mostrarResultadoDaAnalise("Análise sintática sem erros.\n");
+            janelaPrincipal.mostrarResultadoDaAnalise("Análise sintática sem erros.\n");
         } catch (LexicalError | SyntaticError ex) {
-            jp.setCursorNoErro(ex.getPosition());
-            jp.mostrarResultadoDaAnalise("Erro sintático na posição: " + ex.getPosition() + "\n\n" + ex.getMessage() + "\n\n");
+            janelaPrincipal.setCursorNoErro(ex.getPosition());
+            janelaPrincipal.mostrarResultadoDaAnalise("Erro sintático na posição: " + ex.getPosition() + "\n\n" + ex.getMessage() + "\n\n");
         } catch (SemanticError ex) {
-            jp.mostrarResultadoDaAnalise("Erro Semântico na posição: " + ex.getPosition() + "\n\n" + ex.getMessage() + "\n\n");
+            janelaPrincipal.mostrarResultadoDaAnalise("Erro Semântico na posição: " + ex.getPosition() + "\n\n" + ex.getMessage() + "\n\n");
         }
     }
 }
