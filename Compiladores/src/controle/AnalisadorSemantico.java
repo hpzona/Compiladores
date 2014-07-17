@@ -26,15 +26,13 @@ public class AnalisadorSemantico {
         try {
             analisadorSintatico.setExecutaAcoesSemanticas(true);
             analisadorSintatico.parse(analisadorLexico, analisadorSemantico);
-            janelaPrincipal.mostrarResultadoDaAnalise("Análise completa\nNenhum erro encontrado");
+            janelaPrincipal.mostrarResultadoDaAnalise("Análise sintática sem erros.\n");
         } catch (LexicalError | SyntaticError ex) {
-            String mensagemErro;
             janelaPrincipal.setCursorNoErro(ex.getPosition());
-            janelaPrincipal.mostrarResultadoDaAnalise("Erro sintárico na posição: " + ex.getPosition() + "\n" + ex.getMessage() + "\n");
+            janelaPrincipal.mostrarResultadoDaAnalise("Erro sintático na posição: " + ex.getPosition() + "\n\n" + ex.getMessage() + "\n\n");
         } catch (SemanticError ex) {
-            String mensagemErro;
             janelaPrincipal.setCursorNoErro(ex.getPosition());
-            janelaPrincipal.mostrarResultadoDaAnalise("Erro Semantico na posição: " + ex.getPosition() + "\n" + ex.getMessage() + "\n");
+            janelaPrincipal.mostrarResultadoDaAnalise("Erro Semântico na posição: " + ex.getPosition() + "\n\n" + ex.getMessage() + "\n\n");
         } finally {
 
         }
