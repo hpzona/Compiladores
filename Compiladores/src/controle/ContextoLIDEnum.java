@@ -4,5 +4,5 @@ package controle;
 public enum ContextoLIDEnum {
     DECL,    
     LEITURA,
-    PARAMETROFORMAL
+    PAR_FORMAL
 }
