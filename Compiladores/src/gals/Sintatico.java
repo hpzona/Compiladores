@@ -9,6 +9,7 @@ public class Sintatico implements Constants
     private Token previousToken;
     private Lexico scanner;
     private Semantico semanticAnalyser;
+    private boolean executaAcoesSemanticas =  true;
 
     private static final boolean isTerminal(int x)
     {
@@ -69,8 +70,11 @@ public class Sintatico implements Constants
                 throw new SyntaticError(PARSER_ERROR[x], currentToken.getPosition());
         }
         else // isSemanticAction(x)
-        {
-            semanticAnalyser.executeAction(x-FIRST_SEMANTIC_ACTION, previousToken);
+                                {
+            if(executaAcoesSemanticas)
+            {
+                semanticAnalyser.executeAction(x-FIRST_SEMANTIC_ACTION, previousToken);
+            }
             return false;
         }
     }
@@ -105,5 +109,9 @@ public class Sintatico implements Constants
 
         while ( ! step() )
             ;
+    }
+    
+    public void setExecutaAcoesSemanticas(boolean semanticAnalysis) {
+        this.executaAcoesSemanticas = semanticAnalysis;
     }
 }

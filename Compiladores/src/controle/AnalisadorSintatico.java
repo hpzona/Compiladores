@@ -1,4 +1,4 @@
-package controladora;
+package controle;
 
 import gals.LexicalError;
 import gals.Lexico;
@@ -23,6 +23,7 @@ public class AnalisadorSintatico {
         analisadorLexico.setInput(codigo);
 
         try {
+            analisadorSintatico.setExecutaAcoesSemanticas(false);
             analisadorSintatico.parse(analisadorLexico, null);
             janelaPrincipal.mostrarResultadoDaAnalise("Análise sintática sem erros.\n");
         } catch (LexicalError | SyntaticError ex) {

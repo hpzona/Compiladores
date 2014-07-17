@@ -1,7 +1,8 @@
 package visao;
 
-import controladora.AnalisadorLexico;
-import controladora.AnalisadorSintatico;
+import controle.AnalisadorLexico;
+import controle.AnalisadorSemantico;
+import controle.AnalisadorSintatico;
 import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -15,12 +16,14 @@ public class JanelaPrincipal extends javax.swing.JFrame {
 
     AnalisadorLexico analisadorLexico;
     AnalisadorSintatico analisadorSintatico;
+    AnalisadorSemantico analisadorSemantico;
 
     public JanelaPrincipal() {
         initComponents();
         setLocationRelativeTo(null);
         this.analisadorLexico = new AnalisadorLexico(this);
         this.analisadorSintatico = new AnalisadorSintatico(this);
+        this.analisadorSemantico = new AnalisadorSemantico(this);
     }
     
     public void interaja() {
@@ -138,7 +141,11 @@ public class JanelaPrincipal extends javax.swing.JFrame {
         jMenuSemantico.setText("Semântico");
 
         jMenuItemAnalisarSemantico.setText("Compilar");
-        jMenuItemAnalisarSemantico.setEnabled(false);
+        jMenuItemAnalisarSemantico.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jMenuItemAnalisarSemanticoActionPerformed(evt);
+            }
+        });
         jMenuSemantico.add(jMenuItemAnalisarSemantico);
 
         jMenuBar.add(jMenuSemantico);
@@ -226,6 +233,10 @@ public class JanelaPrincipal extends javax.swing.JFrame {
     private void jMenuItemNovoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemNovoActionPerformed
         jTextCodigo.setText("");
     }//GEN-LAST:event_jMenuItemNovoActionPerformed
+
+    private void jMenuItemAnalisarSemanticoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jMenuItemAnalisarSemanticoActionPerformed
+        this.analisadorSemantico.analisarSemantica(jTextCodigo.getText());
+    }//GEN-LAST:event_jMenuItemAnalisarSemanticoActionPerformed
 
     public void mostrarResultadoDaAnalise(String resultado) {
         //Exibe na textArea de saída os resultado da análise

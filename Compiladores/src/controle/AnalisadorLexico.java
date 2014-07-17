@@ -1,4 +1,4 @@
-package controladora;
+package controle;
 
 import gals.LexicalError;
 import gals.Lexico;
