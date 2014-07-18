@@ -4,5 +4,5 @@ package controle;
 public enum ContextoExpressaoEnum {
     IMPRESSAO,
     NADA,
-    PARAMETROATUAL
+    PAR_ATUAL
 }

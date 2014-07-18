@@ -18,8 +18,6 @@ import controle.TipoPreDefinidoEnum;
 import controle.TipoDeVariavel;
 import controle.TipoDeVariavelEnum;
 import controle.Variavel;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Stack;
@@ -41,11 +39,13 @@ public class Semantico implements Constants {
     private ContextoLIDEnum contextoLID;
     private TipoPreDefinidoEnum TipoConst;
     private int NPF;
+    private int NPA;
     private PassagemValOuRefEnum mpp;
     private List<Parametro> listaDeParametros = new ArrayList<>();
     private TipoPreDefinidoEnum TipoVar;
     private TipoPreDefinidoEnum TipoLadoEsq;
     private TipoPreDefinidoEnum retornoMetodo;
+    private TipoPreDefinidoEnum tipoExp;
     private boolean retornoNull;
     private boolean temRetorno = false;
 
@@ -60,13 +60,24 @@ public class Semantico implements Constants {
     private Stack<TipoPreDefinidoEnum> pilhaTipoTermo = new Stack<>();
     private Stack<TipoPreDefinidoEnum> pilhaTipoExpSimples = new Stack<>();
     private Stack<TipoPreDefinidoEnum> pilhaTipoExpr = new Stack<>();
-    private Stack<ContextoExpressaoEnum> PilhaContextoEXPR = new Stack<>();
-    private Stack<TipoPreDefinidoEnum> pilhaVarIndexada = new Stack<>();
+    private Stack<ContextoExpressaoEnum> pilhaContextoExpr = new Stack<>();
+    private Stack<TipoPreDefinidoEnum> pilhaTipoVarIndexada = new Stack<>();
     private Stack<TipoPreDefinidoEnum> pilhaTipoFator = new Stack<>();
     private Stack<Integer> pilhaNPA = new Stack<>();
     private Stack<PassagemValOuRefEnum> pilhaERef = new Stack<>();
     private Stack<Stack<Parametro>> pilhaParametrosValidar = new Stack<>();
     private Stack<Boolean> pilhaRetorno = new Stack<>();
+
+    //AUX
+    private Simbolo simboloAux;
+    private Parametro parametroAux;
+    private Metodo metodoAux;
+    private Variavel variavelAux;
+    private Constante constanteAux;
+    private OperadorRelEnum operadorAux;
+    private TipoPreDefinidoEnum tipoExprAux;
+    private TipoPreDefinidoEnum tipoTermoAux;
+    private TipoPreDefinidoEnum tipoFatorAux;
 
     public void executeAction(int action, Token token) throws SemanticError {
         /* try {
@@ -126,33 +137,33 @@ public class Semantico implements Constants {
                 do {
                     if (categoriaAtual == CategoriaIDEnum.CONSTANTE) {
 
-                        Simbolo simbolo = this.tabSimbolos.getSimbolo(pos);
-                        Constante nova = new Constante(simbolo.getNome(), this.categoriaAtual, simbolo.getNivel());
-                        nova.setTipoPreDefinidoEnum(this.tipoAtual);
-                        nova.setValor(this.ValConst);
-                        this.tabSimbolos.addSimbolo(nova, pos);
+                        this.simboloAux = this.tabSimbolos.getSimbolo(pos);
+                        this.constanteAux = new Constante(this.simboloAux.getNome(), this.categoriaAtual, this.simboloAux.getNivel());
+                        this.constanteAux.setTipoPreDefinidoEnum(this.tipoAtual);
+                        this.constanteAux.setValor(this.ValConst);
+                        this.tabSimbolos.addSimbolo(this.constanteAux, pos);
                         desloc++;
 
                     } else if (categoriaAtual == CategoriaIDEnum.VARIAVEL) {
 
-                        Simbolo simbolo = this.tabSimbolos.getSimbolo(pos);
+                        this.simboloAux = this.tabSimbolos.getSimbolo(pos);
                         TipoDeVariavel tipo;
-                        Variavel nova = new Variavel(simbolo.getNome(), simbolo.getCategoria(), simbolo.getNivel());
-                        nova.setCategoria(this.categoriaAtual);
-                        nova.setDeslocamento(desloc);
+                        this.variavelAux = new Variavel(this.simboloAux.getNome(), this.simboloAux.getCategoria(), this.simboloAux.getNivel());
+                        this.variavelAux.setCategoria(this.categoriaAtual);
+                        this.variavelAux.setDeslocamento(desloc);
                         if (this.subCategoria == SubCategoriaEnum.preDefinido) {
                             tipo = new TipoDeVariavel(MudaTipo.getTipoDeVariavelEnum(this.tipoAtual), 0, null);
-                            nova.setTipo(tipo);
+                            this.variavelAux.setTipo(tipo);
                             desloc++;
 
                         } else if (this.subCategoria == SubCategoriaEnum.cadeia) {
                             tipo = new TipoDeVariavel(MudaTipo.getTipoDeVariavelEnum(this.tipoAtual), Integer.parseInt(this.ValConst), null);
-                            nova.setTipo(tipo);
+                            this.variavelAux.setTipo(tipo);
                             desloc++;
 
                         } else if (this.subCategoria == SubCategoriaEnum.vetor) {
                             tipo = new TipoDeVariavel(TipoDeVariavelEnum.VETOR, NumElementos, this.tipoAtual);
-                            nova.setTipo(tipo);
+                            this.variavelAux.setTipo(tipo);
                             desloc += NumElementos;
                         }
 
@@ -165,13 +176,13 @@ public class Semantico implements Constants {
              #105 - TipoAtual := “inteiro”                
              */
             case 105:
-                this.tipoAtual = TipoPreDefinidoEnum.INTEIRO;
+                this.tipoAtual = TipoPreDefinidoEnum.NUM_INT;
                 break;
             /*
              #106 - TipoAtual := “real”                
              */
             case 106:
-                this.tipoAtual = TipoPreDefinidoEnum.REAL;
+                this.tipoAtual = TipoPreDefinidoEnum.NUM_REAL;
                 break;
             /*
              #107 - TipoAtual := “booleano”                
@@ -192,7 +203,7 @@ public class Semantico implements Constants {
              senão TipoAtual := “cadeia”                
              */
             case 109:
-                if (TipoConst != TipoPreDefinidoEnum.INTEIRO) {
+                if (TipoConst != TipoPreDefinidoEnum.NUM_INT) {
                     throw new SemanticError("Esperava-se uma constante inteira", token.getPosition());
                 } else if (Integer.parseInt(ValConst) > 256) {
                     throw new SemanticError("Cadeia maior do que o permitido", token.getPosition());
@@ -216,7 +227,7 @@ public class Semantico implements Constants {
              Senão Seta NumElementos para ValConst            
              */
             case 111:
-                if (TipoConst != TipoPreDefinidoEnum.INTEIRO) {
+                if (TipoConst != TipoPreDefinidoEnum.NUM_INT) {
                     throw new SemanticError("A dimensão deve ser uma constante inteira", token.getPosition());
                 } else {
                     this.NumElementos = Integer.parseInt(ValConst);
@@ -244,8 +255,8 @@ public class Semantico implements Constants {
                     if (tabSimbolos.jaExisteSimboloNesteEscopo(token.getLexeme(), NA)) {
                         throw new SemanticError("Id já declado", token.getPosition());
                     } else {
-                        Simbolo novo = new Simbolo(token.getLexeme(), categoriaAtual, NA);
-                        tabSimbolos.addSimbolo(novo);
+                        this.simboloAux = new Simbolo(token.getLexeme(), categoriaAtual, NA);
+                        tabSimbolos.addSimbolo(this.simboloAux);
                         this.quantidadeID++;
                     }
                 } else if (this.contextoLID == ContextoLIDEnum.PAR_FORMAL) {
@@ -253,24 +264,24 @@ public class Semantico implements Constants {
                         throw new SemanticError("Id de parametro repetido", token.getPosition());
                     } else {
                         this.NPF++;
-                        Parametro novo = new Parametro(token.getLexeme(), NA);
-                        tabSimbolos.addSimbolo(novo);
+                        this.parametroAux = new Parametro(token.getLexeme(), NA);
+                        tabSimbolos.addSimbolo(this.parametroAux);
                         this.quantidadeID++;
                     }
                 } else if (this.contextoLID == ContextoLIDEnum.LEITURA) {
                     if (!tabSimbolos.jaExisteSimboloNesteEscopo(token.getLexeme(), NA)) {
                         throw new SemanticError("Id não declado", token.getPosition());
                     } else {
-                        Simbolo novo = this.tabSimbolos.getSimboloNivel(token.getLexeme(), this.NA);
-                        if (novo.getCategoria() == CategoriaIDEnum.VARIAVEL || novo.getCategoria() == CategoriaIDEnum.PARAMETRO) {
+                        this.simboloAux = this.tabSimbolos.getSimboloNivel(token.getLexeme(), this.NA);
+                        if (this.simboloAux.getCategoria() == CategoriaIDEnum.VARIAVEL || this.simboloAux.getCategoria() == CategoriaIDEnum.PARAMETRO) {
                             boolean valido = false;
 
-                            if (novo.getCategoria() == CategoriaIDEnum.VARIAVEL) {
-                                Variavel variavel = (Variavel) novo;
-                                valido = !(variavel.getTipo().getTipo() == TipoDeVariavelEnum.BOOLEANO || variavel.getTipo().getTipo() == TipoDeVariavelEnum.VETOR);
-                            } else if (novo.getCategoria() == CategoriaIDEnum.PARAMETRO) {
-                                Parametro parametro = (Parametro) novo;
-                                valido = !(parametro.getTipo() == TipoPreDefinidoEnum.BOOLEANO);
+                            if (this.simboloAux.getCategoria() == CategoriaIDEnum.VARIAVEL) {
+                                this.variavelAux = (Variavel) this.simboloAux;
+                                valido = !(this.variavelAux.getTipo().getTipo() == TipoDeVariavelEnum.BOOLEANO || this.variavelAux.getTipo().getTipo() == TipoDeVariavelEnum.VETOR);
+                            } else if (this.simboloAux.getCategoria() == CategoriaIDEnum.PARAMETRO) {
+                                this.parametroAux = (Parametro) this.simboloAux;
+                                valido = !(this.parametroAux.getTipo() == TipoPreDefinidoEnum.BOOLEANO);
                             }
 
                             if (!valido) {
@@ -314,8 +325,8 @@ public class Semantico implements Constants {
                 if (tabSimbolos.jaExisteSimboloNivel(token.getLexeme(), this.NA)) {
                     throw new SemanticError("Id já declarado", token.getPosition());
                 } else {
-                    Metodo novo = new Metodo(token.getLexeme(), CategoriaIDEnum.METODO, this.NA);
-                    this.tabSimbolos.addSimbolo(novo);
+                    this.metodoAux = new Metodo(token.getLexeme(), CategoriaIDEnum.METODO, this.NA);
+                    this.tabSimbolos.addSimbolo(this.metodoAux);
                     this.pilhaIdMetodo.push(tabSimbolos.getTamanho() - 1);
                     this.NPF = 0;
                     this.deslocamento.push(0);
@@ -328,14 +339,23 @@ public class Semantico implements Constants {
              #118 - Atualiza num. de par. Formais (NPF) na TS          
              */
             case 118:
-
+                this.metodoAux = (Metodo) this.tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
+                this.metodoAux.setListaParametros(this.listaDeParametros);
+                this.metodoAux.setNumParametros(this.NPF);
                 break;
 
             /*  
              #119 - Atualiza tipo do método na TS          
              */
             case 119:
-
+                this.metodoAux = (Metodo) this.tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
+                if (!retornoNull) {
+                    this.metodoAux.setResultado(this.retornoMetodo);
+                    this.pilhaRetorno.push(true);
+                } else {
+                    this.pilhaRetorno.push(false);
+                }
+                this.metodoAux.setRetornoNull(retornoNull);
                 break;
 
             /*  
@@ -346,8 +366,8 @@ public class Semantico implements Constants {
                 this.NA--;
                 deslocamento.pop();
 
-                Metodo metodoAtual = (Metodo) this.tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
-                if (!metodoAtual.isRetornoNull() && !this.temRetorno) {
+                this.metodoAux = (Metodo) this.tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
+                if (!this.metodoAux.isRetornoNull() && !this.temRetorno) {
                     throw new SemanticError("Método sem declaração de retorno", token.getPosition());
                 }
 
@@ -382,18 +402,18 @@ public class Semantico implements Constants {
                     do {
                         desloc = this.deslocamento.pop();
 
-                        Simbolo novo = this.tabSimbolos.getSimbolo(pos);
-                        Parametro par = new Parametro(novo.getNome(), novo.getCategoria(), novo.getNivel());
-                        par.setCategoria(CategoriaIDEnum.PARAMETRO);
-                        par.setTipo(this.tipoAtual);
-                        par.setPassagemValOuRefEnum(mpp);
-                        par.setDeslocamento(desloc);
+                        this.simboloAux = this.tabSimbolos.getSimbolo(pos);
+                        this.parametroAux = new Parametro(this.simboloAux.getNome(), this.simboloAux.getCategoria(), this.simboloAux.getNivel());
+                        this.parametroAux.setCategoria(CategoriaIDEnum.PARAMETRO);
+                        this.parametroAux.setTipo(this.tipoAtual);
+                        this.parametroAux.setPassagemValOuRefEnum(mpp);
+                        this.parametroAux.setDeslocamento(desloc);
                         desloc++;
 
                         this.deslocamento.push(desloc);
-                        this.tabSimbolos.addSimbolo(par, pos);
+                        this.tabSimbolos.addSimbolo(this.parametroAux, pos);
                         pos++;
-                        this.listaDeParametros.add(par);
+                        this.listaDeParametros.add(this.parametroAux);
 
                     } while (pos != this.ultimoID);
                 }
@@ -438,429 +458,613 @@ public class Semantico implements Constants {
                     this.pilhaPosID.push(tabSimbolos.getPosicaoID(token.getLexeme(), this.NA));
                 }
                 break;
+
+            /*
+             #129 - Se TipoExpr <> “booleano” e <> “inteiro” então ERRO(“Tipo inválido da expressão”) 
+             senao (* ação de G. Código *)
+             */
+            case 129:
+                this.tipoExp = this.pilhaTipoExpr.pop();
+                if (this.tipoExp != TipoPreDefinidoEnum.BOOLEANO && this.tipoExp != TipoPreDefinidoEnum.NUM_INT) {
+                    throw new SemanticError("Tipo inválido da expressão", token.getPosition());
+                } else {
+                    ///////////////////// GERA CÓDIGO /////////////////////////
+                }
+                break;
+            /*
+             #130 - Seta ContextoLID para “Leitura”
+             */
+            case 130:
+                this.contextoLID = ContextoLIDEnum.LEITURA;
+                break;
+            /*
+             #131 - Seta ContextoEXPR para “impressão”
+             */
+            case 131:
+                this.pilhaContextoExpr.push(ContextoExpressaoEnum.IMPRESSAO);
+                break;
+            /*
+             #132 - Se está fora do escopo de um método com tipo Então ERRO (“Retorne” só pode ser usado em Método com tipo”) 
+             Senão se TipoExpr <> tipo do método então ERRO(“Tipo de retorno inválido”)
+             senao (* ação de Geração de Código *)
+             */
+            case 132:
+                if (this.pilhaRetorno.isEmpty() && !this.pilhaRetorno.peek()) {
+                    throw new SemanticError("'Retorne' só pode ser usado em Metodo com tipo", token.getPosition());
+                } else {
+                    this.tipoExprAux = this.pilhaTipoExpr.pop();
+                    this.simboloAux = tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
+                    Metodo metodo = (Metodo) this.simboloAux;
+                    TipoPreDefinidoEnum tipoMetodo = metodo.getResultado();
+                    if (this.tipoExprAux != tipoMetodo) {
+                        if (!((tipoMetodo == TipoPreDefinidoEnum.NUM_REAL && this.tipoExprAux == TipoPreDefinidoEnum.NUM_INT) || (tipoMetodo == TipoPreDefinidoEnum.CADEIA && this.tipoExprAux == TipoPreDefinidoEnum.CARACTER))) {
+                            throw new SemanticError("Tipo de retorno inválido", token.getPosition());
+                        }
+                        temRetorno = true;
+                    } else {
+                        temRetorno = true;
+                        ///////////////////// GERA CÓDIGO /////////////////////////
+                    }
+                }
+                break;
+
+            /*
+             #133 - Se categ. de id = “Variável” ou “Parâmetro” então se tipo de id = “vetor” então ERRO (“id. Deveria ser indexado”)
+             senão TipoLadoEsq := tipo de id
+             senão ERRO (“id. deveria ser var ou par”)       
+             */
+            case 133:
+                this.simboloAux = tabSimbolos.getSimbolo(pilhaPosID.pop());
+                if (this.simboloAux.getCategoria() == CategoriaIDEnum.VARIAVEL || this.simboloAux.getCategoria() == CategoriaIDEnum.PARAMETRO) {
+                    if (this.simboloAux.getCategoria() == CategoriaIDEnum.VARIAVEL) {
+                        this.variavelAux = (Variavel) this.simboloAux;
+                        if (this.variavelAux.getTipo().getTipo() == TipoDeVariavelEnum.VETOR) {
+                            throw new SemanticError("Id deveria ser indexado", token.getPosition());
+                        } else {
+                            this.TipoLadoEsq = MudaTipo.getTipoPreDefinido(this.variavelAux.getTipo().getTipo());
+                        }
+                    }
+                    if (this.simboloAux.getCategoria() == CategoriaIDEnum.PARAMETRO) {
+                        this.parametroAux = (Parametro) this.simboloAux;
+                        this.TipoLadoEsq = this.parametroAux.getTipo();
+                    }
+                } else {
+                    throw new SemanticError("Id deveria ser variável ou parametro", token.getPosition());
+                }
+                break;
+
+            /*
+             #134 – se TipoExpr não compatível com tipoLadoesq então ERRO (“tipos incompatíveis”) 
+             senão (* G. Código *)
+             */
+            case 134:
+                if (this.TipoLadoEsq != this.tipoExp) {
+                    if (!((this.tipoExp == TipoPreDefinidoEnum.NUM_INT && this.TipoLadoEsq == TipoPreDefinidoEnum.NUM_REAL) || (this.tipoExp == TipoPreDefinidoEnum.CARACTER && this.TipoLadoEsq == TipoPreDefinidoEnum.CADEIA))) {
+                        throw new SemanticError("Tipos incompatíveis na expressão", token.getPosition());
+                    }
+                } else {
+                    ///////////////////// GERA CÓDIGO /////////////////////////                    
+                }
+                break;
+
+            /*
+             #135 – se categoria de id <> “variável” então ERRO (“esperava-se uma variável”) 
+             senao se tipo de id <> vetor e <> de cadeia então ERRO(“apenas vetores e cadeias podem ser indexados”) 
+             senão TipoVarIndexada = tipo de id (vetor ou cadeia) 
+             */
+            case 135:
+                this.simboloAux = tabSimbolos.getSimbolo(pilhaPosID.peek());
+                if (this.simboloAux.getCategoria() != CategoriaIDEnum.VARIAVEL) {
+                    throw new SemanticError("esperava-se uma variável", token.getPosition());
+                } else {
+                    this.variavelAux = (Variavel) this.simboloAux;
+                    if (this.variavelAux.getTipo().getTipo() != TipoDeVariavelEnum.VETOR && this.variavelAux.getTipo().getTipo() != TipoDeVariavelEnum.CADEIA) {
+                        throw new SemanticError("apenas vetores e cadeias podem ser indexados", token.getPosition());
+                    } else {
+                        this.pilhaTipoVarIndexada.push(MudaTipo.getTipoPreDefinido(this.variavelAux.getTipo().getTipo()));
+                    }
+                }
+                break;
+
+            /*
+             #136 – se TipoExpr <> “inteiro” então ERRO(“índice deveria ser inteiro”) 
+             senão se TipoVarIndexada = cadeia então TipoLadoEsq := “caracter” 
+             senao TipoLadoEsq := TipoElementos do vetor
+             */
+            case 136:
+                this.simboloAux = tabSimbolos.getSimbolo(pilhaPosID.pop());
+                this.variavelAux = (Variavel) this.simboloAux;
+                this.tipoExp = this.pilhaTipoExpr.pop();
+                if (this.tipoExp != TipoPreDefinidoEnum.NUM_INT) {
+                    throw new SemanticError("índice deveria ser inteiro", token.getPosition());
+                } else {
+                    TipoPreDefinidoEnum tipoVarIndexada = this.pilhaTipoVarIndexada.pop();
+                    if (tipoVarIndexada == TipoPreDefinidoEnum.CADEIA) {
+                        this.TipoLadoEsq = TipoPreDefinidoEnum.CADEIA;
+                    } else {
+                        this.TipoLadoEsq = this.variavelAux.getTipo().getTipoElementos();
+                    }
+                }
+                break;
+
+            /*
+             #137 – se categoria de id <> método então ERRO(“id deveria ser um método”) 
+             senão se tipo do método <> nulo então ERRO(“esperava-se mét sem tipo”)
+             */
+            case 137:
+                this.simboloAux = tabSimbolos.getSimbolo(pilhaPosID.peek());
+                if (this.simboloAux.getCategoria() != CategoriaIDEnum.METODO) {
+                    throw new SemanticError("Id deveria ser um método", token.getPosition());
+                } else {
+                    Metodo metodo = (Metodo) this.simboloAux;
+                    if (!metodo.isRetornoNull()) {
+                        throw new SemanticError("Esperava-se método sem tipo", token.getPosition());
+                    }
+                    this.pilhaParametrosValidar.push(metodo.getPilhaParametro());
+                    this.pilhaContextoExpr.push(ContextoExpressaoEnum.PAR_ATUAL);
+                }
+                break;
+
+            /*
+             #138 – NPA := 0 (Número de Parâmetros Atuais) seta contextoEXPR para “par-atual” 
+             */
+            case 138:
+                this.pilhaNPA.clear();
+                this.NPA = 0;
+                this.pilhaContextoExpr.push(ContextoExpressaoEnum.PAR_ATUAL);
+                break;
+
+            /*
+             #139 – se NPA <> NPF então ERRO(“Erro na quant.de parâmetros”)
+             senao (* G. Código para chamada de proc*)
+             */
+            case 139:
+                this.NPA = this.pilhaNPA.pop();
+                this.simboloAux = tabSimbolos.getSimbolo(pilhaPosID.pop());
+                this.metodoAux = (Metodo) this.simboloAux;
+                this.NPF = this.metodoAux.getNumParametros();
+
+                if (NPA != NPF) {
+                    throw new SemanticError("Erro na quant. de parâmetros", token.getPosition());
+                } else {
+                    ///////////////////// GERA CÓDIGO PARA CHAMADA DE PROC /////////////////////////                    
+                }
+                this.pilhaContextoExpr.pop();
+                this.pilhaParametrosValidar.pop();
+                break;
+
+            /*
+             #140 - se categoria de id <> método então ERRO(“id deveria ser um método”) 
+             senão se tipo do método <> nulo então ERRO(“esperava-se método sem tipo”) 
+             senão se NPF <> 0 então ERRO(“Erro na quantidade de parametros”) 
+             senão(*GC p/ chamada de método *)
+             */
+            case 140:
+                this.simboloAux = tabSimbolos.getSimbolo(pilhaPosID.pop());
+                if (this.simboloAux.getCategoria() != CategoriaIDEnum.METODO) {
+                    throw new SemanticError("id deveria ser um método", token.getPosition());
+                } else {
+                    this.metodoAux = (Metodo) this.simboloAux;
+                    if (!this.metodoAux.isRetornoNull()) {
+                        throw new SemanticError("esperava-se método sem tipo", token.getPosition());
+                    } else {
+                        if (this.metodoAux.getNumParametros() > 0) {
+                            throw new SemanticError("Erro na quantidade de parametros", token.getPosition());
+                        } else {
+                            ///////////////////// GERA CÓDIGO PARA CHAMADA DE PROC /////////////////////////  
+                        }
+                    }
+                }
+                break;
+            /*
+             #141 - se ContextoEXPR = “par-atual” então incrementa NPA e Verifica se existe ParâmetroFormal correspondente e se o tipo e o MPP são compatíveis
+             - se ContextoEXPR = “impressão”entao se TipoExpr = booleano então ERRO(“tipo invalido para impressão”)
+             senão (* G. Código para impressão *)                 
+             */
+            case 141:
+                if (this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
+
+                    this.NPA = this.pilhaNPA.pop();
+                    if (!this.pilhaParametrosValidar.peek().isEmpty()) {
+                        this.parametroAux = this.pilhaParametrosValidar.peek().pop();
+                        this.tipoExprAux = this.pilhaTipoExpr.pop();
+
+                        PassagemValOuRefEnum eRef = this.pilhaERef.pop();
+
+                        if (this.tipoExprAux != this.parametroAux.getTipo()) {
+                            if (!(this.parametroAux.getTipo() == TipoPreDefinidoEnum.NUM_REAL && this.tipoExprAux == TipoPreDefinidoEnum.NUM_INT)
+                                    && !(this.parametroAux.getTipo() == TipoPreDefinidoEnum.CADEIA && this.tipoExprAux == TipoPreDefinidoEnum.CARACTER)) {
+
+                                throw new SemanticError("Parametro Formal e Atual não correspondem", token.getPosition());
+                            }
+                        }
+
+                        if (this.parametroAux.getPassagemValOuRefEnum() != eRef) {
+                            if (this.parametroAux.getPassagemValOuRefEnum() == PassagemValOuRefEnum.REFERENCIA) {
+                                throw new SemanticError("Esperava passagem por Referencia", token.getPosition());
+                            }
+                        }
+                    }
+                    NPA++;
+                    this.pilhaNPA.push(NPA);
+                }
+                if (this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.IMPRESSAO) {
+                    this.tipoExprAux = this.pilhaTipoExpr.pop();
+                    if (this.tipoExprAux == TipoPreDefinidoEnum.BOOLEANO) {
+                        throw new SemanticError("tipo invalido para impressão", token.getPosition());
+                    }
+                }
+                break;
+
+            /*
+             #142 - TipoExpr := TipoExpSimples
+             */
+            case 142:
+                this.pilhaTipoExpr.push(this.pilhaTipoExpSimples.pop());
+                break;
+
+            /*
+             #143 – Se TipoExpSimples incompatível com TipoExpr então ERRO (“Operandos incompatíveis”)
+             senão TipoExpr := “booleano”
+             */
+            case 143:
+                this.tipoExprAux = this.pilhaTipoExpr.pop();
+                TipoPreDefinidoEnum tipoExpSimples = this.pilhaTipoExpSimples.pop();
+
+                if (this.tipoExprAux != tipoExpSimples) {
+                    if ((this.tipoExprAux == TipoPreDefinidoEnum.NUM_INT && tipoExpSimples == TipoPreDefinidoEnum.NUM_REAL)
+                            || (this.tipoExprAux == TipoPreDefinidoEnum.NUM_REAL && tipoExpSimples == TipoPreDefinidoEnum.NUM_INT)
+                            || (this.tipoExprAux == TipoPreDefinidoEnum.CADEIA && tipoExpSimples == TipoPreDefinidoEnum.CARACTER)
+                            || (this.tipoExprAux == TipoPreDefinidoEnum.CARACTER && tipoExpSimples == TipoPreDefinidoEnum.CADEIA)) {
+                        this.pilhaTipoExpr.push(TipoPreDefinidoEnum.BOOLEANO);
+                    } else {
+                        throw new SemanticError("Operandos incompatíveis", token.getPosition());
+                    }
+                } else {
+                    this.pilhaTipoExpr.push(TipoPreDefinidoEnum.BOOLEANO);
+                }
+                if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
+                    this.pilhaERef.pop();
+                    this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
+                }
+                break;
+
+            /*
+             #144 a #149 – Guarda Operador Relacional para futura Geração de Código
+             */
+            case 144:
+                this.pilhaOpRel.push(OperadorRelEnum.OPERADORIGUAL);
+                break;
+
+            case 145:
+                this.pilhaOpRel.push(OperadorRelEnum.OPERADORMENOR);
+                break;
+
+            case 146:
+                this.pilhaOpRel.push(OperadorRelEnum.OPERADORMAIOR);
+                break;
+
+            case 147:
+                this.pilhaOpRel.push(OperadorRelEnum.OPERADORMAIORIGUAL);
+                break;
+
+            case 148:
+                this.pilhaOpRel.push(OperadorRelEnum.OPERADORMENORIGUAL);
+                break;
+
+            case 149:
+                this.pilhaOpRel.push(OperadorRelEnum.OPERADORDIFERENTE);
+                break;
+
+            /*
+             #150 - TipoExpSimples := TipoTermo
+             */
+            case 150:
+                this.pilhaTipoExpSimples.push(this.pilhaTipoTermo.pop());
+                break;
+
+            /*
+             #151 – Se operador não se aplica a TipoExpSimples então ERRO(“Op. e Operando incompatíveis”) 
+             */
+            case 151:
+                OperadorAddEnum operadorAddAux = this.pilhaOpAdd.peek();
+                TipoPreDefinidoEnum tipo = this.pilhaTipoExpSimples.peek();
+
+                if ((operadorAddAux == OperadorAddEnum.OPERADORADICAO || operadorAddAux == OperadorAddEnum.OPERADORSUBTRACAO)
+                        && (tipo != TipoPreDefinidoEnum.NUM_INT && tipo != TipoPreDefinidoEnum.NUM_REAL)) {
+                    throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
+                }
+
+                if (operadorAddAux == OperadorAddEnum.OPERADOROU && tipo != TipoPreDefinidoEnum.BOOLEANO) {
+                    throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
+                }
+
+                if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
+                    this.pilhaERef.pop();
+                    this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
+                }
+                break;
+
+            /*
+             #152 - Se TipoTermo incompatível com TipoExpSimples então ERRO (“Operandos incompatíveis”) 
+             senão TipoExpSimples := tipo do resultado da operação(* Gera Código de acordo com oppad *)
+             */
+            case 152:
+                TipoPreDefinidoEnum tipoTermo = this.pilhaTipoTermo.pop();
+                TipoPreDefinidoEnum tipoExprSimp = this.pilhaTipoExpSimples.pop();
+                OperadorAddEnum op = this.pilhaOpAdd.pop();
+
+                //Se for Adição ou Subtração:
+                if (op == OperadorAddEnum.OPERADORADICAO || op == OperadorAddEnum.OPERADORSUBTRACAO) {
+                    if ((tipoExprSimp != TipoPreDefinidoEnum.NUM_INT && tipoExprSimp != TipoPreDefinidoEnum.NUM_REAL)
+                            || (tipoTermo != TipoPreDefinidoEnum.NUM_INT && tipoTermo != TipoPreDefinidoEnum.NUM_REAL)) {
+                        throw new SemanticError("Operandos incompatíveis", token.getPosition());
+                    } else {
+                        //Se um dos dois forem Real, o resultado é Real
+                        if (tipoExprSimp == TipoPreDefinidoEnum.NUM_REAL || tipoTermo == TipoPreDefinidoEnum.NUM_REAL) {
+                            this.pilhaTipoExpSimples.push(TipoPreDefinidoEnum.NUM_REAL);
+                        } else {
+                            this.pilhaTipoExpSimples.push(TipoPreDefinidoEnum.NUM_INT);
+                        }
+                    }
+                }
+
+                //Se for operação lógica
+                if (op == OperadorAddEnum.OPERADOROU) {
+                    if (tipoTermo != TipoPreDefinidoEnum.BOOLEANO) {
+                        throw new SemanticError("Operandos incompatíveis", token.getPosition());
+                    } else {
+                        this.pilhaTipoExpSimples.push(TipoPreDefinidoEnum.BOOLEANO);
+                    }
+                }
+                break;
+
+            /*
+             #153 a #155 – guarda operador para futura G. código
+             */
+            case 153:
+                this.pilhaOpAdd.push(OperadorAddEnum.OPERADORADICAO);
+                break;
+
+            case 154:
+                this.pilhaOpAdd.push(OperadorAddEnum.OPERADORSUBTRACAO);
+                break;
+
+            case 155:
+                this.pilhaOpAdd.push(OperadorAddEnum.OPERADOROU);
+                break;
+
+            /*
+             #156 – TipoTermo := TipoFator
+             */
+            case 156:
+                this.pilhaTipoTermo.push(this.pilhaTipoFator.pop());
+                break;
+
+            /*
+             #157 – Se operador não se aplica a TipoTermo então ERRO(“Op. e Operando incompatíveis”) 
+             */
+            case 157:
+                OperadorMultEnum operadorMult = this.pilhaOpMult.peek();
+                this.tipoTermoAux = this.pilhaTipoTermo.peek();
+
+                if ((operadorMult == OperadorMultEnum.OPERADORMULTIPLICACAO || operadorMult == OperadorMultEnum.OPERADORDIVISAO)
+                        && (this.tipoTermoAux != TipoPreDefinidoEnum.NUM_INT && this.tipoTermoAux != TipoPreDefinidoEnum.NUM_REAL)) {
+
+                    throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
+                }
+                if (operadorMult == OperadorMultEnum.OPERADORDIV && this.tipoTermoAux != TipoPreDefinidoEnum.NUM_INT) {
+                    throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
+                }
+                if (operadorMult == OperadorMultEnum.OPERADORE && this.tipoTermoAux != TipoPreDefinidoEnum.BOOLEANO) {
+                    throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
+                }
+
+                if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
+                    this.pilhaERef.pop();
+                    this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
+                }
+                break;
+
+            /*
+             #158 - Se TipoFator incompatível com TipoTermo então ERRO (“Operandos incompatíveis”) 
+             senão TipoTermo := tipo do res. da operação (* G. Código de acordo com opmult *)    
+             */
+            case 158:
+                this.tipoTermoAux = this.pilhaTipoTermo.pop();
+                this.tipoFatorAux = this.pilhaTipoFator.pop();
+                OperadorMultEnum opMult = this.pilhaOpMult.pop();
+                if (opMult == OperadorMultEnum.OPERADORMULTIPLICACAO || opMult == OperadorMultEnum.OPERADORDIVISAO) {
+
+                    if ((this.tipoTermoAux != TipoPreDefinidoEnum.NUM_INT && this.tipoTermoAux != TipoPreDefinidoEnum.NUM_REAL)
+                            || (this.tipoFatorAux != TipoPreDefinidoEnum.NUM_INT && this.tipoFatorAux != TipoPreDefinidoEnum.NUM_REAL)) {
+                        throw new SemanticError("Operandos incompatíveis", token.getPosition());
+                    } else {
+                        if ((this.tipoTermoAux == TipoPreDefinidoEnum.NUM_REAL || this.tipoFatorAux == TipoPreDefinidoEnum.NUM_REAL) || opMult == OperadorMultEnum.OPERADORDIVISAO) {
+                            this.pilhaTipoTermo.push(TipoPreDefinidoEnum.NUM_REAL);
+                        } else {
+                            this.pilhaTipoTermo.push(TipoPreDefinidoEnum.NUM_INT);
+                        }
+                        ///////////////////// GERA CÓDIGO DE ACORDO COM OPMULT ///////////////////////// 
+                    }
+                }
+                break;
+
+            /*
+             #159 a #162 – guarda operador para futura G. código 
+             */
+            case 159:
+                this.pilhaOpMult.push(OperadorMultEnum.OPERADORMULTIPLICACAO);
+                break;
+
+            case 160:
+                this.pilhaOpMult.push(OperadorMultEnum.OPERADORDIVISAO);
+                break;
+
+            case 161:
+                this.pilhaOpMult.push(OperadorMultEnum.OPERADORE);
+                break;
+
+            case 162:
+                this.pilhaOpMult.push(OperadorMultEnum.OPERADORDIV);
+                break;
+
+            /*
+                
+             */
+            case 163:
+
+                break;
+
+            /*
+                
+             */
+            case 164:
+
+                break;
+
+            /*
+                
+             */
+            case 165:
+
+                break;
+
+            /*
+                
+             */
+            case 166:
+
+                break;
+
+            /*
+             #167 - OpNega := OpUnario := false
+             */
+            case 167:
+                this.pilhaOpNega.push(false);
+                this.pilhaOpUnario.push(false);
+                break;
+
+            /*
+             #168 – TipoFator := TipoExpr 
+             */
+            case 168:
+                this.pilhaTipoFator.push(this.pilhaTipoExpr.pop());
+                /*   this.pilhaOpNega.pop();
+                 this.pilhaOpUnario.pop();
+                 if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
+                 if ((!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) || (!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
+                 this.pilhaERef.pop();
+                 this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
+                 }
+
+                 }*/
+                break;
+
+            /*
+             #169 – TipoFator := TipoVar
+             */
+            case 169:
+                this.pilhaTipoFator.push(TipoVar);
+                break;
+
+            /*
+             #170 – TipoFator := TipoCte
+             */
+            case 170:
+                this.pilhaTipoFator.push(this.TipoConst);
+                /*
+                 if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
+                 if (!(!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) && !(!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
+                 this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
+                 }
+                 }*/
+                break;
+
+            /*
+                
+             */
+            case 171:
+
+                break;
+
+            /*
+                
+             */
+            case 172:
+
+                break;
+
+            /*
+                
+             */
+            case 173:
+
+                break;
+
+            /*
+                
+             */
+            case 174:
+
+                break;
+
+            /*
+                
+             */
+            case 175:
+
+                break;
+
+            /*
+             #176 a #180 – TipoConst:= tipo da constante
+             ValConst:= valor da constante
+             */
+            case 176:
+                this.TipoConst = TipoPreDefinidoEnum.NUM_INT;
+                this.ValConst = token.getLexeme();
+                break;
+
+            case 177:
+                this.TipoConst = TipoPreDefinidoEnum.NUM_REAL;
+                this.ValConst = token.getLexeme();
+                break;
+
+            case 178:
+                this.TipoConst = TipoPreDefinidoEnum.BOOLEANO;
+                this.ValConst = token.getLexeme();
+                break;
+
+            case 179:
+                this.TipoConst = TipoPreDefinidoEnum.BOOLEANO;
+                this.ValConst = token.getLexeme();
+                break;
+
+            case 180:
+                if (token.getLexeme().length() - 2 == 1) {
+                    // OU 
+                    //if (token.getLexeme().length() == 1) {
+                    //TESTAR O CERTO!!!
+                    this.TipoConst = TipoPreDefinidoEnum.CARACTER;
+                } else {
+                    this.TipoConst = TipoPreDefinidoEnum.CADEIA;
+                }
+                this.ValConst = token.getLexeme();
+                break;
+
         }
     }
 
     /**
      * ***********************************************************************************************************************************************************
      */
-    public void executarAcaoSemantica116(Token token) throws SemanticError {
-        Metodo metodo = (Metodo) this.tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
-        metodo.setListaParametros(this.listaDeParametros);
-        metodo.setNumParametros(this.NPF);
-    }
 
-    public void executarAcaoSemantica117(Token token) throws SemanticError {
-        Metodo metodo = (Metodo) this.tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
-        if (!retornoNull) {
-            metodo.setResultado(this.retornoMetodo);
-            this.pilhaRetorno.push(true);
-        } else {
-            this.pilhaRetorno.push(false);
-        }
-        metodo.setRetornoNull(retornoNull);
-
-    }
-
-    public void executarAcaoSemantica127(Token token) throws SemanticError {
-        TipoPreDefinidoEnum tipoExp = this.pilhaTipoExpr.pop();
-        if (tipoExp != TipoPreDefinidoEnum.INTEIRO && tipoExp != TipoPreDefinidoEnum.BOOLEANO) {
-            throw new SemanticError("Tipo inválido da expressão", token.getPosition());
-        } else {
-            //Gerar Codigo              
-        }
-    }
-
-    public void executarAcaoSemantica128(Token token) {
-        this.contextoLID = ContextoLIDEnum.LEITURA;
-    }
-
-    public void executarAcaoSemantica129(Token token) throws SemanticError {
-        this.PilhaContextoEXPR.push(ContextoExpressaoEnum.IMPRESSAO);
-        TipoPreDefinidoEnum tipoExp = this.pilhaTipoExpr.pop();
-        if (tipoExp == TipoPreDefinidoEnum.BOOLEANO) {
-            throw new SemanticError("tipo invalido para impressão", token.getPosition());
-        } else {
-            //Gerar Codigo              
-        }
-    }
-
-    public void executarAcaoSemantica130(Token token) throws SemanticError {
-        if (!this.pilhaRetorno.isEmpty() && this.pilhaRetorno.peek()) {
-            TipoPreDefinidoEnum tipoExp = this.pilhaTipoExpr.pop();
-            Simbolo simbolo = tabSimbolos.getSimbolo(this.pilhaIdMetodo.peek());
-            Metodo metodo = (Metodo) simbolo;
-            TipoPreDefinidoEnum tipoMetodo = metodo.getResultado();
-            if (tipoExp != tipoMetodo) {
-                if (!((tipoMetodo == TipoPreDefinidoEnum.REAL && tipoExp == TipoPreDefinidoEnum.INTEIRO) || (tipoMetodo == TipoPreDefinidoEnum.CADEIA && tipoExp == TipoPreDefinidoEnum.CARACTER))) {
-                    throw new SemanticError("Tipo de exp inválido", token.getPosition());
-                }
-                temRetorno = true;
-            } else {
-                temRetorno = true;
-                //gerar codigo
-            }
-
-        } else {
-            throw new SemanticError("'Retorne' só pode ser usado em função", token.getPosition());
-        }
-    }
-
-    public void executarAcaoSemantica131(Token token) throws SemanticError {
-        Simbolo simbolo = tabSimbolos.getSimbolo(pilhaPosID.pop());
-        if (simbolo.getCategoria() == CategoriaIDEnum.VARIAVEL || simbolo.getCategoria() == CategoriaIDEnum.PARAMETRO) {
-            if (simbolo.getCategoria() == CategoriaIDEnum.VARIAVEL) {
-                Variavel variavel = (Variavel) simbolo;
-                if (variavel.getTipo().getTipo() == TipoDeVariavelEnum.VETOR) {
-                    throw new SemanticError("id. Deveria ser indexado", token.getPosition());
-                } else {
-                    this.TipoLadoEsq = MudaTipo.getTipoPreDefinido(variavel.getTipo().getTipo());
-                }
-            }
-            if (simbolo.getCategoria() == CategoriaIDEnum.PARAMETRO) {
-                Parametro parametro = (Parametro) simbolo;
-                this.TipoLadoEsq = parametro.getTipo();
-            }
-        } else {
-            throw new SemanticError("id. deveria ser var ou par", token.getPosition());
-        }
-    }
-
-    public void executarAcaoSemantica132(Token token) throws SemanticError {
-        TipoPreDefinidoEnum tipoExpr = this.pilhaTipoExpr.pop();
-        if (this.TipoLadoEsq != tipoExpr) {
-            if (!((tipoExpr == TipoPreDefinidoEnum.INTEIRO && this.TipoLadoEsq == TipoPreDefinidoEnum.REAL) || (tipoExpr == TipoPreDefinidoEnum.CARACTER && this.TipoLadoEsq == TipoPreDefinidoEnum.CADEIA))) {
-                throw new SemanticError("tipos incompatíveis", token.getPosition());
-            }
-        }
-    }
-
-    public void executarAcaoSemantica133(Token token) throws SemanticError {
-        Simbolo simbolo = tabSimbolos.getSimbolo(pilhaPosID.peek());
-        if (simbolo.getCategoria() != CategoriaIDEnum.VARIAVEL) {
-            throw new SemanticError("esperava-se uma variável", token.getPosition());
-        } else {
-            Variavel variavel = (Variavel) simbolo;
-            if (variavel.getTipo().getTipo() != TipoDeVariavelEnum.VETOR && variavel.getTipo().getTipo() != TipoDeVariavelEnum.CADEIA) {
-                throw new SemanticError("apenas vetores e cadeias podem ser indexados", token.getPosition());
-            } else {
-                this.pilhaVarIndexada.push(MudaTipo.getTipoPreDefinido(variavel.getTipo().getTipo()));
-            }
-        }
-    }
-
-    public void executarAcaoSemantica134(Token token) throws SemanticError {
-        Simbolo simbolo = tabSimbolos.getSimbolo(pilhaPosID.pop());
-        Variavel variavel = (Variavel) simbolo;
-        TipoPreDefinidoEnum tipoExpr = this.pilhaTipoExpr.pop();
-        if (tipoExpr != TipoPreDefinidoEnum.INTEIRO) {
-            throw new SemanticError("índice deveria ser inteiro", token.getPosition());
-        } else {
-            TipoPreDefinidoEnum tipoVarIndexada = this.pilhaVarIndexada.pop();
-            if (tipoVarIndexada == TipoPreDefinidoEnum.CADEIA) {
-                this.TipoLadoEsq = TipoPreDefinidoEnum.CADEIA;
-            } else {
-                this.TipoLadoEsq = variavel.getTipo().getTipoElementos();
-            }
-        }
-    }
-
-    public void executarAcaoSemantica135(Token token) throws SemanticError {
-        Simbolo simbolo = tabSimbolos.getSimbolo(pilhaPosID.peek());
-        if (simbolo.getCategoria() != CategoriaIDEnum.METODO) {
-            throw new SemanticError("id deveria ser um método", token.getPosition());
-        } else {
-            Metodo metodo = (Metodo) simbolo;
-            if (!metodo.isRetornoNull()) {
-                throw new SemanticError("esperava-se mét sem tipo", token.getPosition());
-            }
-            this.pilhaParametrosValidar.push(metodo.getPilhaParametro());
-            this.PilhaContextoEXPR.push(ContextoExpressaoEnum.PARAMETROATUAL);
-        }
-    }
-
-    public void executarAcaoSemantica136(Token token) throws SemanticError {
-        this.pilhaNPA.push(1);
-        if (!this.pilhaParametrosValidar.peek().isEmpty()) {
-            //this.ContextoEXPR = ContextoExpressaoEnum.PARAMETROATUAL; Verificar necessidade 
-            TipoPreDefinidoEnum tipoExpr = this.pilhaTipoExpr.pop();
-            Parametro parametro = this.pilhaParametrosValidar.peek().pop();
-            PassagemValOuRefEnum eRef = this.pilhaERef.pop();
-
-            if (tipoExpr != parametro.getTipo()) {
-                if (!(parametro.getTipo() == TipoPreDefinidoEnum.REAL && tipoExpr == TipoPreDefinidoEnum.INTEIRO) && !(parametro.getTipo() == TipoPreDefinidoEnum.CADEIA && tipoExpr == TipoPreDefinidoEnum.CARACTER)) {
-                    throw new SemanticError("Não há correpondecia entre parametro Atual e parametro Formal", token.getPosition());
-                }
-            }
-
-            if (parametro.getPassagemValOuRefEnum() != eRef) {
-                if (parametro.getPassagemValOuRefEnum() == PassagemValOuRefEnum.REFERENCIA) {
-                    throw new SemanticError("Esperava passagem de Parametro por Referencia", token.getPosition());
-                }
-            }
-        }
-    }
-
-    public void executarAcaoSemantica137(Token token) throws SemanticError {
-        int NPA = this.pilhaNPA.pop();
-        Simbolo simbolo = tabSimbolos.getSimbolo(pilhaPosID.pop());
-        Metodo metodo = (Metodo) simbolo;
-        if (NPA != metodo.getNumParametros()) {
-            throw new SemanticError("Erro na quant. de parâmetros", token.getPosition());
-        }
-        this.PilhaContextoEXPR.pop();
-        this.pilhaParametrosValidar.pop();
-    }
-
-    public void executarAcaoSemantica138(Token token) throws SemanticError {
-        Simbolo simbolo = tabSimbolos.getSimbolo(pilhaPosID.pop());
-        if (simbolo.getCategoria() != CategoriaIDEnum.METODO) {
-            throw new SemanticError("id deveria ser um método", token.getPosition());
-        } else {
-            Metodo metodo = (Metodo) simbolo;
-            if (!metodo.isRetornoNull()) {
-                throw new SemanticError("esperava-se método sem tipo", token.getPosition());
-            } else {
-                if (metodo.getNumParametros() > 0) {
-                    throw new SemanticError("Erro na quantidade de parametros", token.getPosition());
-                } else {
-                    //Gerar Codigo 
-                }
-            }
-        }
-    }
-
-    public void executarAcaoSemantica139(Token token) throws SemanticError {
-        if (this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
-
-            int NPA = this.pilhaNPA.pop();
-            if (!this.pilhaParametrosValidar.peek().isEmpty()) {
-                TipoPreDefinidoEnum tipoExpr = this.pilhaTipoExpr.pop();
-                Parametro parametro = this.pilhaParametrosValidar.peek().pop();
-                PassagemValOuRefEnum eRef = this.pilhaERef.pop();
-
-                if (tipoExpr != parametro.getTipo()) {
-                    if (!(parametro.getTipo() == TipoPreDefinidoEnum.REAL && tipoExpr == TipoPreDefinidoEnum.INTEIRO) && !(parametro.getTipo() == TipoPreDefinidoEnum.CADEIA && tipoExpr == TipoPreDefinidoEnum.CARACTER)) {
-                        throw new SemanticError("Não há correpondecia entre parametro Atual e parametro Formal", token.getPosition());
-                    }
-                }
-
-                if (parametro.getPassagemValOuRefEnum() != eRef) {
-                    if (parametro.getPassagemValOuRefEnum() == PassagemValOuRefEnum.REFERENCIA) {
-                        throw new SemanticError("Esperava passagem por Referencia", token.getPosition());
-                    }
-                }
-            }
-            NPA++;
-            this.pilhaNPA.push(NPA);
-        }
-        if (this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.IMPRESSAO) {
-            TipoPreDefinidoEnum tipoExpr = this.pilhaTipoExpr.pop();
-            if (tipoExpr == TipoPreDefinidoEnum.BOOLEANO) {
-                throw new SemanticError("tipo invalido para impressão", token.getPosition());
-            }
-        }
-    }
-
-    public void executarAcaoSemantica140(Token token) {
-        this.pilhaTipoExpr.push(this.pilhaTipoExpSimples.pop());
-    }
-
-    public void executarAcaoSemantica141(Token token) throws SemanticError {
-        OperadorRelEnum operador = this.pilhaOpRel.pop();
-        TipoPreDefinidoEnum tipoExp = this.pilhaTipoExpr.pop();
-        TipoPreDefinidoEnum tipoExpSimples = this.pilhaTipoExpSimples.pop();
-
-        /*if(operador == OperadorRelEnum.Operador_Maior || operador == OperadorRelEnum.Operador_Maior_Igual || operador == OperadorRelEnum.Operador_Menor || operador == OperadorRelEnum.Operador_Menor_Igual)
-         {
-         if(((tipoExp != TipoPreDefinidoEnum.INTEIRO && tipoExpSimples != TipoPreDefinidoEnum.REAL) || (tipoExp != TipoPreDefinidoEnum.INTEIRO && tipoExpSimples != TipoPreDefinidoEnum.REAL)) && (tipoExp != TipoPreDefinidoEnum.BOOLEANO && tipoExpSimples != TipoPreDefinidoEnum.BOOLEANO))
-         {
-         throw new SemanticError("Operandos incompatíveis", token.getPosition());
-         }
-         else
-         {
-         this.pilhaTipoExpr.push(TipoPreDefinidoEnum.BOOLEANO);
-         }  
-         }*/
-        //if(operador == OperadorRelEnum.OPERADORIGUAL || operador == OperadorRelEnum.Operador_Diferente)
-        //{
-        if (tipoExp != tipoExpSimples) {
-            if ((tipoExp == TipoPreDefinidoEnum.INTEIRO && tipoExpSimples == TipoPreDefinidoEnum.REAL) || (tipoExp == TipoPreDefinidoEnum.REAL && tipoExpSimples == TipoPreDefinidoEnum.INTEIRO)
-                    || (tipoExp == TipoPreDefinidoEnum.CADEIA && tipoExpSimples == TipoPreDefinidoEnum.CARACTER) || (tipoExp == TipoPreDefinidoEnum.CARACTER && tipoExpSimples == TipoPreDefinidoEnum.CADEIA)) {
-                this.pilhaTipoExpr.push(TipoPreDefinidoEnum.BOOLEANO);
-            } else {
-                throw new SemanticError("Operandos incompatíveis", token.getPosition());
-            }
-        } else {
-            this.pilhaTipoExpr.push(TipoPreDefinidoEnum.BOOLEANO);
-        }
-        //}
-
-        if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
-            this.pilhaERef.pop();
-            this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
-        }
-    }
-
-    public void executarAcaoSemantica142(Token token) {
-        this.pilhaOpRel.push(OperadorRelEnum.OPERADORIGUAL);
-    }
-
-    public void executarAcaoSemantica143(Token token) {
-        this.pilhaOpRel.push(OperadorRelEnum.OPERADORMENOR);
-    }
-
-    public void executarAcaoSemantica144(Token token) {
-        this.pilhaOpRel.push(OperadorRelEnum.OPERADORMAIOR);
-    }
-
-    public void executarAcaoSemantica145(Token token) {
-        this.pilhaOpRel.push(OperadorRelEnum.OPERADORMAIORIGUAL);
-    }
-
-    public void executarAcaoSemantica146(Token token) {
-        this.pilhaOpRel.push(OperadorRelEnum.OPERADORMENORIGUAL);
-    }
-
-    public void executarAcaoSemantica147(Token token) {
-        this.pilhaOpRel.push(OperadorRelEnum.OPERADORDIFERENTE);
-    }
-
-    public void executarAcaoSemantica148(Token token) {
-        this.pilhaTipoExpSimples.push(this.pilhaTipoTermo.pop());
-    }
-
-    public void executarAcaoSemantica149(Token token) throws SemanticError {
-        OperadorAddEnum operador = this.pilhaOpAdd.peek();
-        TipoPreDefinidoEnum tipo = this.pilhaTipoExpSimples.peek();
-
-        if ((operador == OperadorAddEnum.OPERADORADICAO || operador == OperadorAddEnum.OPERADORSUBTRACAO) && (tipo != TipoPreDefinidoEnum.INTEIRO && tipo != TipoPreDefinidoEnum.REAL)) {
-            throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
-        }
-
-        if (operador == OperadorAddEnum.OPERADOROU && tipo != TipoPreDefinidoEnum.BOOLEANO) {
-            throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
-        }
-
-        if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
-            this.pilhaERef.pop();
-            this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
-        }
-    }
-
-    public void executarAcaoSemantica150(Token token) throws SemanticError {
-        OperadorAddEnum operador = this.pilhaOpAdd.pop();
-        TipoPreDefinidoEnum tipoExpSimples = this.pilhaTipoExpSimples.pop();
-        TipoPreDefinidoEnum tipoTermo = this.pilhaTipoTermo.pop();
-
-        if (operador == OperadorAddEnum.OPERADORADICAO || operador == OperadorAddEnum.OPERADORSUBTRACAO) {
-            if ((tipoExpSimples != TipoPreDefinidoEnum.INTEIRO && tipoExpSimples != TipoPreDefinidoEnum.REAL) || (tipoTermo != TipoPreDefinidoEnum.INTEIRO && tipoTermo != TipoPreDefinidoEnum.REAL)) {
-                throw new SemanticError("Operandos incompatíveis", token.getPosition());
-            } else {
-                if (tipoExpSimples == TipoPreDefinidoEnum.REAL || tipoTermo == TipoPreDefinidoEnum.REAL) {
-                    this.pilhaTipoExpSimples.push(TipoPreDefinidoEnum.REAL);
-                } else {
-                    this.pilhaTipoExpSimples.push(TipoPreDefinidoEnum.INTEIRO);
-                }
-            }
-        }
-        if (operador == OperadorAddEnum.OPERADOROU) {
-            if (tipoTermo != TipoPreDefinidoEnum.BOOLEANO) {
-                throw new SemanticError("Operandos incompatíveis", token.getPosition());
-            } else {
-                this.pilhaTipoExpSimples.push(TipoPreDefinidoEnum.BOOLEANO);
-            }
-        }
-    }
-
-    public void executarAcaoSemantica151(Token token) {
-        this.pilhaOpAdd.push(OperadorAddEnum.OPERADORADICAO);
-    }
-
-    public void executarAcaoSemantica152(Token token) {
-        this.pilhaOpAdd.push(OperadorAddEnum.OPERADORSUBTRACAO);
-    }
-
-    public void executarAcaoSemantica153(Token token) {
-        this.pilhaOpAdd.push(OperadorAddEnum.OPERADOROU);
-    }
-
-    public void executarAcaoSemantica154(Token token) {
-        this.pilhaTipoTermo.push(this.pilhaTipoFator.pop());
-    }
-
-    public void executarAcaoSemantica155(Token token) throws SemanticError {
-        OperadorMultEnum operador = this.pilhaOpMult.peek();
-        TipoPreDefinidoEnum tipo = this.pilhaTipoTermo.peek();
-        if ((operador == OperadorMultEnum.OPERADORMULTIPLICACAO || operador == OperadorMultEnum.OPERADORDIVISAO) && (tipo != TipoPreDefinidoEnum.INTEIRO && tipo != TipoPreDefinidoEnum.REAL)) {
-            throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
-        }
-        if (operador == OperadorMultEnum.OPERADORDIV && tipo != TipoPreDefinidoEnum.INTEIRO) {
-            throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
-        }
-        if (operador == OperadorMultEnum.OPERADORE && tipo != TipoPreDefinidoEnum.BOOLEANO) {
-            throw new SemanticError("Op. e Operando incompatíveis", token.getPosition());
-        }
-
-        if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
-            this.pilhaERef.pop();
-            this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
-        }
-    }
-
-    public void executarAcaoSemantica156(Token token) throws SemanticError {
-        TipoPreDefinidoEnum tipoTermo = this.pilhaTipoTermo.pop();
-        TipoPreDefinidoEnum tipoFator = this.pilhaTipoFator.pop();
-        OperadorMultEnum operador = this.pilhaOpMult.pop();
-        if (operador == OperadorMultEnum.OPERADORMULTIPLICACAO || operador == OperadorMultEnum.OPERADORDIVISAO) {
-            if ((tipoTermo != TipoPreDefinidoEnum.INTEIRO && tipoTermo != TipoPreDefinidoEnum.REAL) || (tipoFator != TipoPreDefinidoEnum.INTEIRO && tipoFator != TipoPreDefinidoEnum.REAL)) {
-                throw new SemanticError("Operandos incompatíveis", token.getPosition());
-            } else {
-                if ((tipoTermo == TipoPreDefinidoEnum.REAL || tipoFator == TipoPreDefinidoEnum.REAL) || operador == OperadorMultEnum.OPERADORDIVISAO) {
-                    this.pilhaTipoTermo.push(TipoPreDefinidoEnum.REAL);
-                } else {
-                    this.pilhaTipoTermo.push(TipoPreDefinidoEnum.INTEIRO);
-                }
-            }
-        }
-        if (operador == OperadorMultEnum.OPERADORDIV) {
-            if (tipoTermo != TipoPreDefinidoEnum.INTEIRO || tipoFator != TipoPreDefinidoEnum.INTEIRO) {
-                throw new SemanticError("Operandos incompatíveis", token.getPosition());
-            } else {
-                this.pilhaTipoTermo.push(TipoPreDefinidoEnum.INTEIRO);
-            }
-        }
-        if (operador == OperadorMultEnum.OPERADORE) {
-            if (tipoTermo != TipoPreDefinidoEnum.BOOLEANO || tipoFator != TipoPreDefinidoEnum.BOOLEANO) {
-                throw new SemanticError("Operandos incompatíveis", token.getPosition());
-            } else {
-                this.pilhaTipoTermo.push(TipoPreDefinidoEnum.BOOLEANO);
-            }
-        }
-    }
-
-    public void executarAcaoSemantica157(Token token) {
-        this.pilhaOpMult.push(OperadorMultEnum.OPERADORMULTIPLICACAO);
-    }
-
-    public void executarAcaoSemantica158(Token token) {
-        this.pilhaOpMult.push(OperadorMultEnum.OPERADORDIVISAO);
-    }
-
-    public void executarAcaoSemantica159(Token token) {
-        this.pilhaOpMult.push(OperadorMultEnum.OPERADORDIV);
-    }
-
-    public void executarAcaoSemantica160(Token token) {
-        this.pilhaOpMult.push(OperadorMultEnum.OPERADORE);
-    }
-
-    public void executarAcaoSemantica161(Token token) throws SemanticError {
+public void executarAcaoSemantica161(Token token) throws SemanticError {
         if (!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) {
             throw new SemanticError("Op. 'não' repetido – não pode!", token.getPosition());
         } else {
             this.pilhaOpNega.push(true);
-            if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
+            if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
                 this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
             }
         }
@@ -879,7 +1083,7 @@ public class Semantico implements Constants {
             throw new SemanticError("Op. 'unário' repetido", token.getPosition());
         } else {
             this.pilhaOpUnario.push(true);
-            if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
+            if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
                 this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
             }
         }
@@ -887,72 +1091,39 @@ public class Semantico implements Constants {
 
     public void executarAcaoSemantica164(Token token) throws SemanticError {
         TipoPreDefinidoEnum tipo = this.pilhaTipoFator.peek();
-        if (tipo != TipoPreDefinidoEnum.INTEIRO && tipo != TipoPreDefinidoEnum.REAL) {
+        if (tipo != TipoPreDefinidoEnum.NUM_INT && tipo != TipoPreDefinidoEnum.NUM_REAL) {
             throw new SemanticError("Op. unário exige operando num.", token.getPosition());
         }
         this.pilhaOpUnario.pop();
     }
 
-    public void executarAcaoSemantica165(Token token) {
-        this.pilhaOpNega.push(false);
-        this.pilhaOpUnario.push(false);
-    }
-
-    public void executarAcaoSemantica166(Token token) {
-        this.pilhaTipoFator.push(this.pilhaTipoExpr.pop());
-        this.pilhaOpNega.pop();
-        this.pilhaOpUnario.pop();
-        if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
-            if ((!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) || (!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
-                this.pilhaERef.pop();
-                this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
-            }
-
-        }
-
-    }
-
-    public void executarAcaoSemantica167(Token token) throws SemanticError {
-        this.pilhaTipoFator.push(TipoVar);
-    }
-
-    public void executarAcaoSemantica168(Token token) throws SemanticError {
-        this.pilhaTipoFator.push(this.TipoConst);
-
-        if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
-            if (!(!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) && !(!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
-                this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
-            }
-        }
-    }
-
     public void executarAcaoSemantica169(Token token) throws SemanticError {
-        Simbolo simbolo = tabSimbolos.getSimbolo(this.pilhaPosID.peek());
-        if (simbolo.getCategoria() != CategoriaIDEnum.METODO) {
+        this.simboloAux = tabSimbolos.getSimbolo(this.pilhaPosID.peek());
+        if (this.simboloAux.getCategoria() != CategoriaIDEnum.METODO) {
             throw new SemanticError("id deveria ser um método", token.getPosition());
         } else {
-            Metodo metodo = (Metodo) simbolo;
+            Metodo metodo = (Metodo) this.simboloAux;
             if (metodo.isRetornoNull()) {
                 throw new SemanticError("esperava-se mét. com tipo", token.getPosition());
             }
             this.pilhaParametrosValidar.push(metodo.getPilhaParametro());
         }
 
-        this.PilhaContextoEXPR.push(ContextoExpressaoEnum.PARAMETROATUAL);
+        this.pilhaContextoExpr.push(ContextoExpressaoEnum.PAR_ATUAL);
     }
 
     public void executarAcaoSemantica170(Token token) throws SemanticError {
-        int NPA = this.pilhaNPA.pop();
-        Simbolo simbolo = tabSimbolos.getSimbolo(pilhaPosID.pop());
-        Metodo metodo = (Metodo) simbolo;
-        if (NPA == metodo.getNumParametros()) {
-            this.TipoVar = metodo.getResultado();
+        this.NPA = this.pilhaNPA.pop();
+        this.simboloAux = tabSimbolos.getSimbolo(pilhaPosID.pop());
+        this.metodoAux = (Metodo) this.simboloAux;
+        if (NPA == this.metodoAux.getNumParametros()) {
+            this.TipoVar = this.metodoAux.getResultado();
         } else {
             throw new SemanticError("Erro na quant. de parâmetros", token.getPosition());
         }
-        this.PilhaContextoEXPR.push(ContextoExpressaoEnum.PARAMETROATUAL);
+        this.pilhaContextoExpr.push(ContextoExpressaoEnum.PAR_ATUAL);
 
-        if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
+        if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
             if (!(!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) && !(!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
                 this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
             }
@@ -962,19 +1133,19 @@ public class Semantico implements Constants {
     }
 
     public void executarAcaoSemantica171(Token token) throws SemanticError {
-        if (this.pilhaTipoExpr.pop() != TipoPreDefinidoEnum.INTEIRO) {
+        if (this.pilhaTipoExpr.pop() != TipoPreDefinidoEnum.NUM_INT) {
             throw new SemanticError("índice deveria ser inteiro", token.getPosition());
         } else {
-            if (this.pilhaVarIndexada.pop() == TipoPreDefinidoEnum.CADEIA) {
+            if (this.pilhaTipoVarIndexada.pop() == TipoPreDefinidoEnum.CADEIA) {
                 this.TipoVar = TipoPreDefinidoEnum.CARACTER;
                 this.pilhaPosID.pop();
             } else {
-                Variavel variavel = (Variavel) this.tabSimbolos.getSimbolo(this.pilhaPosID.pop());
-                this.TipoVar = variavel.getTipo().getTipoElementos();
+                this.variavelAux = (Variavel) this.tabSimbolos.getSimbolo(this.pilhaPosID.pop());
+                this.TipoVar = this.variavelAux.getTipo().getTipoElementos();
             }
         }
 
-        if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
+        if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
             if (!(!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) && !(!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
                 this.pilhaERef.push(PassagemValOuRefEnum.REFERENCIA);
             }
@@ -982,39 +1153,39 @@ public class Semantico implements Constants {
     }
 
     public void executarAcaoSemantica172(Token token) throws SemanticError {
-        Simbolo simbolo = this.tabSimbolos.getSimbolo(this.pilhaPosID.pop());
-        if (simbolo.getCategoria() == CategoriaIDEnum.PARAMETRO || simbolo.getCategoria() == CategoriaIDEnum.VARIAVEL) {
-            if (simbolo.getCategoria() == CategoriaIDEnum.VARIAVEL) {
-                Variavel variavel = (Variavel) simbolo;
-                if (variavel.getTipo().getTipo() == TipoDeVariavelEnum.VETOR) {
+        this.simboloAux = this.tabSimbolos.getSimbolo(this.pilhaPosID.pop());
+        if (this.simboloAux.getCategoria() == CategoriaIDEnum.PARAMETRO || this.simboloAux.getCategoria() == CategoriaIDEnum.VARIAVEL) {
+            if (this.simboloAux.getCategoria() == CategoriaIDEnum.VARIAVEL) {
+                this.variavelAux = (Variavel) this.simboloAux;
+                if (this.variavelAux.getTipo().getTipo() == TipoDeVariavelEnum.VETOR) {
                     throw new SemanticError("vetor deve ser indexado", token.getPosition());
                 } else {
-                    TipoVar = MudaTipo.getTipoPreDefinido(variavel.getTipo().getTipo());
+                    TipoVar = MudaTipo.getTipoPreDefinido(this.variavelAux.getTipo().getTipo());
                 }
             } else {
-                Parametro parametro = (Parametro) simbolo;
-                TipoVar = parametro.getTipo();
+                this.parametroAux = (Parametro) this.simboloAux;
+                TipoVar = this.parametroAux.getTipo();
             }
 
-            if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
+            if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
                 if (!(!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) && !(!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
                     this.pilhaERef.push(PassagemValOuRefEnum.REFERENCIA);
                 }
             }
 
         } else {
-            if (simbolo.getCategoria() == CategoriaIDEnum.METODO) {
-                Metodo metodo = (Metodo) simbolo;
-                if (metodo.isRetornoNull()) {
+            if (this.simboloAux.getCategoria() == CategoriaIDEnum.METODO) {
+                this.metodoAux = (Metodo) this.simboloAux;
+                if (this.metodoAux.isRetornoNull()) {
                     throw new SemanticError("Esperava-se método com tipo", token.getPosition());
                 } else {
-                    if (metodo.getNumParametros() != 0) {
+                    if (this.metodoAux.getNumParametros() != 0) {
                         throw new SemanticError("Erro na quant. de parâmetros", token.getPosition());
                     } else {
-                        TipoVar = metodo.getResultado();
+                        TipoVar = this.metodoAux.getResultado();
                     }
 
-                    if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
+                    if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
                         if (!(!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) && !(!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
                             this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
                         }
@@ -1022,10 +1193,10 @@ public class Semantico implements Constants {
                 }
 
             } else {
-                if (simbolo.getCategoria() == CategoriaIDEnum.CONSTANTE) {
-                    Constante constante = (Constante) simbolo;
-                    TipoVar = constante.getTipoPreDefinidoEnum();
-                    if (!this.PilhaContextoEXPR.isEmpty() && this.PilhaContextoEXPR.peek() == ContextoExpressaoEnum.PARAMETROATUAL) {
+                if (this.simboloAux.getCategoria() == CategoriaIDEnum.CONSTANTE) {
+                    this.constanteAux = (Constante) this.simboloAux;
+                    TipoVar = this.constanteAux.getTipoPreDefinidoEnum();
+                    if (!this.pilhaContextoExpr.isEmpty() && this.pilhaContextoExpr.peek() == ContextoExpressaoEnum.PAR_ATUAL) {
 
                         if (!(!this.pilhaOpNega.isEmpty() && this.pilhaOpNega.peek()) && !(!this.pilhaOpUnario.isEmpty() && this.pilhaOpUnario.peek())) {
                             this.pilhaERef.push(PassagemValOuRefEnum.VALOR);
@@ -1056,36 +1227,4 @@ public class Semantico implements Constants {
         }
     }
 
-    /**
-     * TipoConst := tipo da constante ValConst := valor da constante
-     */
-    public void executarAcaoSemantica174(Token token) {
-        this.TipoConst = TipoPreDefinidoEnum.INTEIRO;
-        this.ValConst = token.getLexeme();
-    }
-
-    public void executarAcaoSemantica175(Token token) {
-        this.TipoConst = TipoPreDefinidoEnum.REAL;
-        this.ValConst = token.getLexeme();
-    }
-
-    public void executarAcaoSemantica176(Token token) {
-        this.TipoConst = TipoPreDefinidoEnum.BOOLEANO;
-        this.ValConst = token.getLexeme();
-    }
-
-    public void executarAcaoSemantica177(Token token) {
-        this.TipoConst = TipoPreDefinidoEnum.BOOLEANO;
-        this.ValConst = token.getLexeme();
-    }
-
-    public void executarAcaoSemantica178(Token token) {
-        if (token.getLexeme().length() - 2 == 1) //testar isso 
-        {
-            this.TipoConst = TipoPreDefinidoEnum.CARACTER;
-        } else {
-            this.TipoConst = TipoPreDefinidoEnum.CADEIA;
-        }
-        this.ValConst = token.getLexeme();
-    }
 }
