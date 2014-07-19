@@ -1,7 +1,7 @@
 package controle;
 
 // Classe desenvolvida por Lucas e Willian
-public class MudaTipo {
+public class Converte {
 
     public static TipoDeVariavelEnum getTipoDeVariavelEnum(TipoPreDefinidoEnum tipoPreDefinidoEnum)
     {

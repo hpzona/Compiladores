@@ -6,7 +6,7 @@ import controle.ExpressaoEnum;
 import controle.LIDEnum;
 import controle.PassagemValOuRefEnum;
 import controle.Metodo;
-import controle.MudaTipo;
+import controle.Converte;
 import controle.OperadorAddEnum;
 import controle.OperadorMultEnum;
 import controle.OperadorRelEnum;
@@ -135,12 +135,12 @@ public class Semantico implements Constants {
                         this.variavelAux.setCategoria(this.categoriaAtual);
                         this.variavelAux.setDeslocamento(desloc);
                         if (this.subCategoria == SubCategoriaEnum.preDefinido) {
-                            tipo = new TipoDeVariavel(MudaTipo.getTipoDeVariavelEnum(this.tipoAtualTipoPreDefinido), 0, null);
+                            tipo = new TipoDeVariavel(Converte.getTipoDeVariavelEnum(this.tipoAtualTipoPreDefinido), 0, null);
                             this.variavelAux.setTipoDeVariavel(tipo);
                             desloc++;
 
                         } else if (this.subCategoria == SubCategoriaEnum.cadeia) {
-                            tipo = new TipoDeVariavel(MudaTipo.getTipoDeVariavelEnum(this.tipoAtualTipoPreDefinido), Integer.parseInt(this.valConst), null);
+                            tipo = new TipoDeVariavel(Converte.getTipoDeVariavelEnum(this.tipoAtualTipoPreDefinido), Integer.parseInt(this.valConst), null);
                             this.variavelAux.setTipoDeVariavel(tipo);
                             desloc++;
 
@@ -504,7 +504,7 @@ public class Semantico implements Constants {
                         if (this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum() == TipoDeVariavelEnum.VETOR) {
                             throw new SemanticError("id deveria ser indexado.", token.getPosition());
                         } else {
-                            this.tipoLadoEsqTipoPreDefinido = MudaTipo.getTipoPreDefinidoEnum(this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum());
+                            this.tipoLadoEsqTipoPreDefinido = Converte.getTipoPreDefinidoEnum(this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum());
                         }
                     }
                     if (this.simboloAux.getCategoria() == CategoriaIDEnum.PARAMETRO) {
@@ -544,7 +544,7 @@ public class Semantico implements Constants {
                     if (this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum() != TipoDeVariavelEnum.VETOR && this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum() != TipoDeVariavelEnum.CADEIA) {
                         throw new SemanticError("Apenas vetores e cadeias podem ser indexados.", token.getPosition());
                     } else {
-                        this.pilhaTipoVariavelIndexadaTipoPreDefinido.push(MudaTipo.getTipoPreDefinidoEnum(this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum()));
+                        this.pilhaTipoVariavelIndexadaTipoPreDefinido.push(Converte.getTipoPreDefinidoEnum(this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum()));
                     }
                 }
                 break;
@@ -1086,7 +1086,7 @@ public class Semantico implements Constants {
                         if (this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum() == TipoDeVariavelEnum.VETOR) {
                             throw new SemanticError("Vetor deve ser indexado.", token.getPosition());
                         } else {
-                            tipoVarTipoPreDefinido = MudaTipo.getTipoPreDefinidoEnum(this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum());
+                            tipoVarTipoPreDefinido = Converte.getTipoPreDefinidoEnum(this.variavelAux.getTipoDeVariavel().getTipoDeVariavelEnum());
                         }
                     } else {
                         this.parametroAux = (Parametro) this.simboloAux;
