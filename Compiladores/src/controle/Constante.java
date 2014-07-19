@@ -9,16 +9,16 @@ public class Constante extends Simbolo {
     public Constante() {
     }
 
-    public Constante(TipoPreDefinidoEnum tipoPreDefinidoEnum, String valor, String nome, CategoriaIDEnum categoria, int nivel) {
+    /*public Constante(TipoPreDefinidoEnum tipoPreDefinidoEnum, String valor, String nome, CategoriaIDEnum categoria, int nivel) {
         super(nome, categoria, nivel);
         this.tipoPreDefinidoEnum = tipoPreDefinidoEnum;
         this.valor = valor;
-    }
+    }*/
 
-    public Constante(TipoPreDefinidoEnum tipoPreDefinidoEnum, String valor) {
+    /*public Constante(TipoPreDefinidoEnum tipoPreDefinidoEnum, String valor) {
         this.tipoPreDefinidoEnum = tipoPreDefinidoEnum;
         this.valor = valor;
-    }
+    }*/
 
     public Constante(String nome, CategoriaIDEnum categoria, int nivel) {
         super(nome, categoria, nivel);
@@ -31,13 +31,12 @@ public class Constante extends Simbolo {
     public String getValor() {
         return valor;
     }
-
-    public void setTipoPreDefinidoEnum(TipoPreDefinidoEnum tipoPreDefinidoEnum) {
-        this.tipoPreDefinidoEnum = tipoPreDefinidoEnum;
-    }
-
+    
     public TipoPreDefinidoEnum getTipoPreDefinidoEnum() {
         return tipoPreDefinidoEnum;
     }
 
+    public void setTipoPreDefinidoEnum(TipoPreDefinidoEnum tipoPreDefinidoEnum) {
+        this.tipoPreDefinidoEnum = tipoPreDefinidoEnum;
+    }
 }

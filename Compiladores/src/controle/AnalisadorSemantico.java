@@ -26,7 +26,7 @@ public class AnalisadorSemantico {
         try {
             analisadorSintatico.setExecutaAcoesSemanticas(true);
             analisadorSintatico.parse(analisadorLexico, analisadorSemantico);
-            janelaPrincipal.mostrarResultadoDaAnalise("Análise sintática sem erros.\n");
+            janelaPrincipal.mostrarResultadoDaAnalise("Análise semântica sem erros.\n");
         } catch (LexicalError | SyntaticError ex) {
             janelaPrincipal.setCursorNoErro(ex.getPosition());
             janelaPrincipal.mostrarResultadoDaAnalise("Erro sintático na posição: " + ex.getPosition() + "\n\n" + ex.getMessage() + "\n\n");

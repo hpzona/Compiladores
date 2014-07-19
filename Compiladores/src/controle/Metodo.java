@@ -7,8 +7,8 @@ import java.util.Stack;
 public class Metodo extends Simbolo{
     protected int enderecoDaPrimeiraInstrucao;
     protected int numeroDeParametros;
-    protected List<Parametro> listaParametros;
-    protected TipoPreDefinidoEnum resultado; 
+    protected List<Parametro> listaDeParametros;
+    protected TipoPreDefinidoEnum resultadoDoTipoPreDefinidoEnum; 
     protected boolean retornoNull;
 
     public Metodo() {
@@ -18,35 +18,35 @@ public class Metodo extends Simbolo{
         super(nome, categoria, nivel);
     }
 
-    public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaParametros, TipoPreDefinidoEnum resultado) {
+    /*public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaDeParametros, TipoPreDefinidoEnum resultadoDoTipoPreDefinidoEnum) {
         this.enderecoDaPrimeiraInstrucao = endereço1Instrução;
         this.numeroDeParametros = numParametros;
-        this.listaParametros = listaParametros;
-        this.resultado = resultado;
-    }
+        this.listaDeParametros = listaDeParametros;
+        this.resultadoDoTipoPreDefinidoEnum = resultadoDoTipoPreDefinidoEnum;
+    }*/
 
-    public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaParametros, TipoPreDefinidoEnum resultado, String nome, CategoriaIDEnum categoria, int nivel) {
+    /*public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaDeParametros, TipoPreDefinidoEnum resultadoDoTipoPreDefinidoEnum, String nome, CategoriaIDEnum categoria, int nivel) {
         super(nome, categoria, nivel);
         this.enderecoDaPrimeiraInstrucao = endereço1Instrução;
         this.numeroDeParametros = numParametros;
-        this.listaParametros = listaParametros;
-        this.resultado = resultado;
-    }    
+        this.listaDeParametros = listaDeParametros;
+        this.resultadoDoTipoPreDefinidoEnum = resultadoDoTipoPreDefinidoEnum;
+    } */   
 
-    public int getEndereço1Instrução() {
+    public int getEnderecoPrimeiraInstrucao() {
         return enderecoDaPrimeiraInstrucao;
     }
 
-    public List<Parametro> getListaParametros() {
-        return listaParametros;
+    public List<Parametro> getListaDeParametros() {
+        return listaDeParametros;
     }
 
-    public int getNumParametros() {
+    public int getNumeroDeParametros() {
         return numeroDeParametros;
     }
 
     public TipoPreDefinidoEnum getResultado() {
-        return resultado;
+        return resultadoDoTipoPreDefinidoEnum;
     }
 
     public boolean isRetornoNull() {
@@ -58,7 +58,7 @@ public class Metodo extends Simbolo{
     }
 
     public void setListaParametros(List<Parametro> listaParametros) {
-        this.listaParametros = listaParametros;
+        this.listaDeParametros = listaParametros;
     }
 
     public void setNumParametros(int numParametros) {
@@ -66,7 +66,7 @@ public class Metodo extends Simbolo{
     }
 
     public void setResultado(TipoPreDefinidoEnum resultado) {
-        this.resultado = resultado;
+        this.resultadoDoTipoPreDefinidoEnum = resultado;
     }
 
     public void setRetornoNull(boolean retornoNull) {
@@ -76,8 +76,8 @@ public class Metodo extends Simbolo{
     public Stack<Parametro> getPilhaParametro()
     {
         Stack<Parametro> retorno = new Stack<Parametro>();
-        for (int i = this.listaParametros.size() - 1; i >=  0; i--) {
-            retorno.push(this.listaParametros.get(i));
+        for (int i = this.listaDeParametros.size() - 1; i >=  0; i--) {
+            retorno.push(this.listaDeParametros.get(i));
         }
         return retorno;
     }

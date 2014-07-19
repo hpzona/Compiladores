@@ -2,36 +2,36 @@ package controle;
 
 // Classe desenvolvida por Lucas e Willian
 public class TipoDeVariavel {
-    protected TipoDeVariavelEnum tipo;
+    protected TipoDeVariavelEnum tipoDeVariavelEnum;
     protected int tamanho;
-    protected TipoPreDefinidoEnum tipoElementos;
+    protected TipoPreDefinidoEnum tipoPreDefinidoEnum;
 
     public TipoDeVariavel() {
     }
 
-    public TipoDeVariavel(TipoDeVariavelEnum tipo, int tamanho, TipoPreDefinidoEnum tipoElementos) {
-        this.tipo = tipo;
+    public TipoDeVariavel(TipoDeVariavelEnum tipoDeVariavelEnum, int tamanho, TipoPreDefinidoEnum tipoPreDefinidoEnum) {
+        this.tipoDeVariavelEnum = tipoDeVariavelEnum;
         this.tamanho = tamanho;
-        this.tipoElementos = tipoElementos;
+        this.tipoPreDefinidoEnum = tipoPreDefinidoEnum;
     }
+    
+    public void setTipoDeVariavelEnum(TipoDeVariavelEnum tipo) {
+        this.tipoDeVariavelEnum = tipo;
+    } 
 
-    public TipoDeVariavelEnum getTipo() {
-        return tipo;
+    public TipoDeVariavelEnum getTipoDeVariavelEnum() {
+        return tipoDeVariavelEnum;
+    }
+    
+    public TipoPreDefinidoEnum getTipoPreDefinidoEnum() {
+        return tipoPreDefinidoEnum;
+    }
+    
+    public void setTamanho(int tamanho) {
+        this.tamanho = tamanho;
     }
 
     public int getTamanho() {
         return tamanho;
     }
-
-    public TipoPreDefinidoEnum getTipoElementos() {
-        return tipoElementos;
-    }
-
-    public void setTamanho(int tamanho) {
-        this.tamanho = tamanho;
-    }
-
-    public void setTipo(TipoDeVariavelEnum tipo) {
-        this.tipo = tipo;
-    }    
 }

@@ -6,42 +6,42 @@ import java.util.List;
 
 // Classe desenvolvida por Lucas e Willian
 public class TabelaDeSimbolos {
-    private List<Simbolo> tabela;
+    private List<Simbolo> tabelaDeSimbolos;
 
     public TabelaDeSimbolos() {
-        tabela = new ArrayList<Simbolo>();
+        tabelaDeSimbolos = new ArrayList<Simbolo>();
     }
 
-    public TabelaDeSimbolos(List<Simbolo> tabela) {
-        this.tabela = tabela;
+    public TabelaDeSimbolos(List<Simbolo> tabelaDeSimbolos) {
+        this.tabelaDeSimbolos = tabelaDeSimbolos;
     }
 
-    public List<Simbolo> getTabela() {
-        return tabela;
+    public List<Simbolo> getTabelaDeSimbolos() {
+        return tabelaDeSimbolos;
     }
 
-    public void setTabela(List<Simbolo> tabela) {
-        this.tabela = tabela;
+    public void setTabelaDeSimbolos(List<Simbolo> tabela) {
+        this.tabelaDeSimbolos = tabela;
     }
     
     public void addSimbolo(Simbolo s)
     {
-        tabela.add(s);            
+        tabelaDeSimbolos.add(s);            
     }
     
     public void addSimbolo(Simbolo s, int posicao)
     {
-        tabela.set(posicao, s);
+        tabelaDeSimbolos.set(posicao, s);
     }
     
     public void removerSimbolo(Simbolo s)
     {
-        tabela.remove(s);    
+        tabelaDeSimbolos.remove(s);    
     }
     
     public boolean jaExisteSimbolo(Simbolo s)
     {
-        if(tabela.contains(s))   
+        if(tabelaDeSimbolos.contains(s))   
         {
             return true;
         }
@@ -52,11 +52,11 @@ public class TabelaDeSimbolos {
     }   
     
     
-    public boolean jaExisteSimboloNivel(String s, int nivel)
+    public boolean jaExisteSimboloNoNivel(String s, int nivel)
     {
-        for (Iterator<Simbolo> it = tabela.iterator(); it.hasNext();) {
+        for (Iterator<Simbolo> it = tabelaDeSimbolos.iterator(); it.hasNext();) {
             Simbolo simbolo = it.next();
-            if(simbolo.getNome().equals(s) && (simbolo.getNivel() == nivel || simbolo.getNivel() == 0))
+            if(simbolo.getNomeDoSimbolo().equals(s) && (simbolo.getNivel() == nivel || simbolo.getNivel() == 0))
             {
                 return true;
             }
@@ -64,17 +64,17 @@ public class TabelaDeSimbolos {
         return false;
     }
     
-    public Simbolo getSimboloNivel(String s, int nivel)
+    public Simbolo getSimboloNoNivel(String s, int nivel)
     {
         Simbolo resultado = new Simbolo("", 0);
-        for (Iterator<Simbolo> it = tabela.iterator(); it.hasNext();) {
+        for (Iterator<Simbolo> it = tabelaDeSimbolos.iterator(); it.hasNext();) {
             Simbolo simbolo = it.next();
-            if((simbolo.getNome().equals(s) && simbolo.getNivel() <= nivel) && simbolo.getNivel() > resultado.nivel)
+            if((simbolo.getNomeDoSimbolo().equals(s) && simbolo.getNivel() <= nivel) && simbolo.getNivel() > resultado.nivel)
             {
                 resultado = simbolo;
             }
         }
-        if(resultado.getNome().equals(""))
+        if(resultado.getNomeDoSimbolo().equals(""))
         {
             return null;
         }
@@ -84,50 +84,50 @@ public class TabelaDeSimbolos {
     public void removerSimboloNoNivel(Simbolo s, int nivel)
     {
         Simbolo aRemover =  new Simbolo();
-        for (Iterator<Simbolo> it = tabela.iterator(); it.hasNext();) {
+        for (Iterator<Simbolo> it = tabelaDeSimbolos.iterator(); it.hasNext();) {
             Simbolo simbolo = it.next();
             if(simbolo.equals(s) && simbolo.getNivel() == nivel)
             {
                 aRemover = simbolo;
             }
         }
-        tabela.remove(aRemover); 
+        tabelaDeSimbolos.remove(aRemover); 
     }
     
-    public int getTamanho() {
-        return tabela.size();
+    public int getTamanhoDaTabelaDeSimbolos() {
+        return tabelaDeSimbolos.size();
     }
     
     public Simbolo getSimbolo(int i) {
-        return tabela.get(i);
+        return tabelaDeSimbolos.get(i);
     }
 
     public void removeNivelAtual(int nivelAtual) {
-        for (int i = 0; i < tabela.size(); i++) {
-            if (tabela.get(i).getNivel() == nivelAtual) {
-                tabela.remove(i);
+        for (int i = 0; i < tabelaDeSimbolos.size(); i++) {
+            if (tabelaDeSimbolos.get(i).getNivel() == nivelAtual) {
+                tabelaDeSimbolos.remove(i);
                 i--;
             }
         }
     }
 
-    public Integer getPosicaoID(String nome, int nivel) {
+    public Integer getPosicaoDoSimbolo(String nome, int nivel) {
         Simbolo simbolo = new Simbolo("", 0);
         int resultado = 0;
-        for (int i = 0; i < tabela.size(); i++) {
-            if((tabela.get(i).getNome().equals(nome) && tabela.get(i).getNivel() <= nivel) && (tabela.get(i).getNivel() > simbolo.nivel))
+        for (int i = 0; i < tabelaDeSimbolos.size(); i++) {
+            if((tabelaDeSimbolos.get(i).getNomeDoSimbolo().equals(nome) && tabelaDeSimbolos.get(i).getNivel() <= nivel) && (tabelaDeSimbolos.get(i).getNivel() > simbolo.nivel))
             {
-                simbolo = tabela.get(i);
+                simbolo = tabelaDeSimbolos.get(i);
                 resultado = i;
             }
         }
         return resultado;
     }
 
-    public boolean jaExisteSimboloNesteEscopo(String s, int nivel) { //validar
-        for (Iterator<Simbolo> it = tabela.iterator(); it.hasNext();) {
+    public boolean jaExisteSimboloNesteEscopo(String s, int nivel) { 
+        for (Iterator<Simbolo> it = tabelaDeSimbolos.iterator(); it.hasNext();) {
             Simbolo simbolo = it.next();
-            if(simbolo.getNome().equals(s) && simbolo.getNivel() <= nivel)
+            if(simbolo.getNomeDoSimbolo().equals(s) && simbolo.getNivel() <= nivel)
             {
                 return true;
             }
