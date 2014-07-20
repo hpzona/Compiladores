@@ -18,18 +18,18 @@ public class Parametro extends Simbolo{
         super(nome, nivel);
     }
 
-    /*public Parametro(int deslocamento, PassagemValOuRefEnum passagemValOuRefEnum, TipoPreDefinidoEnum tipoPreDefinidoEnum) {
+    public Parametro(int deslocamento, PassagemValOuRefEnum passagemValOuRefEnum, TipoPreDefinidoEnum tipoPreDefinidoEnum) {
         this.deslocamento = deslocamento;
         this.passagemValOuRefEnum = passagemValOuRefEnum;
         this.tipoPreDefinidoEnum = tipoPreDefinidoEnum;
-    }*/
+    }
 
-    /*public Parametro(int deslocamento, PassagemValOuRefEnum passagemValOuRefEnum, TipoPreDefinidoEnum tipoPreDefinidoEnum, String nome, CategoriaIDEnum categoria, int nivel) {
+    public Parametro(int deslocamento, PassagemValOuRefEnum passagemValOuRefEnum, TipoPreDefinidoEnum tipoPreDefinidoEnum, String nome, CategoriaIDEnum categoria, int nivel) {
         super(nome, categoria, nivel);
         this.deslocamento = deslocamento;
         this.passagemValOuRefEnum = passagemValOuRefEnum;
         this.tipoPreDefinidoEnum = tipoPreDefinidoEnum;
-    }*/  
+    }  
 
     public int getDeslocamento() {
         return deslocamento;

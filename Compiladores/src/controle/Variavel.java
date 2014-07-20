@@ -21,11 +21,11 @@ public class Variavel extends Simbolo{
         super(nome, nivel);
     }*/
 
-    /*public Variavel(int deslocamento, TipoDeVariavel tipoDeVariavel, String nome, CategoriaIDEnum categoria, int nivel) {
+    public Variavel(int deslocamento, TipoDeVariavel tipoDeVariavel, String nome, CategoriaIDEnum categoria, int nivel) {
         super(nome, categoria, nivel);
         this.deslocamento = deslocamento;
         this.tipoDeVariavel = tipoDeVariavel;
-    }*/
+    }
 
     public int getDeslocamento() {
         return deslocamento;

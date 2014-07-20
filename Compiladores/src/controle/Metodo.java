@@ -18,20 +18,20 @@ public class Metodo extends Simbolo{
         super(nome, categoria, nivel);
     }
 
-    /*public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaDeParametros, TipoPreDefinidoEnum resultadoDoTipoPreDefinidoEnum) {
+    public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaDeParametros, TipoPreDefinidoEnum resultadoDoTipoPreDefinidoEnum) {
         this.enderecoDaPrimeiraInstrucao = endereço1Instrução;
         this.numeroDeParametros = numParametros;
         this.listaDeParametros = listaDeParametros;
         this.resultadoDoTipoPreDefinidoEnum = resultadoDoTipoPreDefinidoEnum;
-    }*/
+    }
 
-    /*public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaDeParametros, TipoPreDefinidoEnum resultadoDoTipoPreDefinidoEnum, String nome, CategoriaIDEnum categoria, int nivel) {
+    public Metodo(int endereço1Instrução, int numParametros, List<Parametro> listaDeParametros, TipoPreDefinidoEnum resultadoDoTipoPreDefinidoEnum, String nome, CategoriaIDEnum categoria, int nivel) {
         super(nome, categoria, nivel);
         this.enderecoDaPrimeiraInstrucao = endereço1Instrução;
         this.numeroDeParametros = numParametros;
         this.listaDeParametros = listaDeParametros;
         this.resultadoDoTipoPreDefinidoEnum = resultadoDoTipoPreDefinidoEnum;
-    } */   
+    }   
 
     public int getEnderecoPrimeiraInstrucao() {
         return enderecoDaPrimeiraInstrucao;

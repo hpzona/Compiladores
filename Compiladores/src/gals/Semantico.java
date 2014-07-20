@@ -3,7 +3,7 @@ package gals;
 import controle.CategoriaIDEnum;
 import controle.Constante;
 import controle.ExpressaoEnum;
-import controle.LIDEnum;
+import controle.ContextoLIDEnum;
 import controle.PassagemValOuRefEnum;
 import controle.Metodo;
 import controle.Converte;
@@ -36,7 +36,7 @@ public class Semantico implements Constants {
     private TipoPreDefinidoEnum tipoAtualTipoPreDefinido;
     private SubCategoriaEnum subCategoria;
     private CategoriaIDEnum categoriaAtual;
-    private LIDEnum contextoLID;
+    private ContextoLIDEnum contextoLID;
     private TipoPreDefinidoEnum tipoConstanteTipoPreDefinido;
     private int NPF;
     private int NPA;
@@ -99,7 +99,7 @@ public class Semantico implements Constants {
              Guarda pos. na TS do primeiro id da lista 
              */
             case 102:
-                this.contextoLID = LIDEnum.DECL;
+                this.contextoLID = ContextoLIDEnum.DECL;
                 this.primeiroID = this.tabSimbolos.getTamanhoDaTabelaDeSimbolos();
                 this.quantidadeID = 0;
                 break;
@@ -234,7 +234,7 @@ public class Semantico implements Constants {
              senão (* Gera Cód. para leitura *)            
              */
             case 113:
-                if (this.contextoLID == LIDEnum.DECL) {
+                if (this.contextoLID == ContextoLIDEnum.DECL) {
                     if (tabSimbolos.jaExisteSimboloNesteEscopo(token.getLexeme(), NA)) {
                         throw new SemanticError("id já declarado.", token.getPosition());
                     } else {
@@ -242,7 +242,7 @@ public class Semantico implements Constants {
                         tabSimbolos.addSimbolo(this.simboloAux);
                         this.quantidadeID++;
                     }
-                } else if (this.contextoLID == LIDEnum.PAR_FORMAL) {
+                } else if (this.contextoLID == ContextoLIDEnum.PAR_FORMAL) {
                     if (tabSimbolos.jaExisteSimboloNesteEscopo(token.getLexeme(), NA)) {
                         throw new SemanticError("id de parâmetro repetido.", token.getPosition());
                     } else {
@@ -251,7 +251,7 @@ public class Semantico implements Constants {
                         tabSimbolos.addSimbolo(this.parametroAux);
                         this.quantidadeID++;
                     }
-                } else if (this.contextoLID == LIDEnum.LEITURA) {
+                } else if (this.contextoLID == ContextoLIDEnum.LEITURA) {
                     if (!tabSimbolos.jaExisteSimboloNesteEscopo(token.getLexeme(), NA)) {
                         throw new SemanticError("id não declarado.", token.getPosition());
                     } else {
@@ -362,7 +362,7 @@ public class Semantico implements Constants {
              #121 - Seta contextoLID para “par-formal” Marca pos.na TS do primeiro id da lista           
              */
             case 121:
-                this.contextoLID = LIDEnum.PAR_FORMAL;
+                this.contextoLID = ContextoLIDEnum.PAR_FORMAL;
                 this.primeiroID = this.tabSimbolos.getTamanhoDaTabelaDeSimbolos();
                 this.quantidadeID = 0;
                 break;
@@ -458,7 +458,7 @@ public class Semantico implements Constants {
              #130 - Seta ContextoLID para “Leitura”
              */
             case 130:
-                this.contextoLID = LIDEnum.LEITURA;
+                this.contextoLID = ContextoLIDEnum.LEITURA;
                 break;
             /*
              #131 - Seta ContextoEXPR para “impressão”
