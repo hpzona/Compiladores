@@ -125,9 +125,9 @@ public class Semantico implements Constants {
                         this.constanteAux.setTipoPreDefinidoEnum(this.tipoAtualTipoPreDefinido);
                         this.constanteAux.setValor(this.valConst);
                         this.tabSimbolos.addSimbolo(this.constanteAux, pos);
-                        desloc++;
+                    }
 
-                    } else if (categoriaAtual == CategoriaIDEnum.VARIAVEL) {
+                    if (categoriaAtual == CategoriaIDEnum.VARIAVEL) {
 
                         this.simboloAux = this.tabSimbolos.getSimbolo(pos);
                         TipoDeVariavel tipo;
@@ -139,18 +139,21 @@ public class Semantico implements Constants {
                             this.variavelAux.setTipoDeVariavel(tipo);
                             desloc++;
 
-                        } else if (this.subCategoria == SubCategoriaEnum.cadeia) {
+                        }
+                        if (this.subCategoria == SubCategoriaEnum.cadeia) {
                             tipo = new TipoDeVariavel(Converte.getTipoDeVariavelEnum(this.tipoAtualTipoPreDefinido), Integer.parseInt(this.valConst), null);
                             this.variavelAux.setTipoDeVariavel(tipo);
                             desloc++;
 
-                        } else if (this.subCategoria == SubCategoriaEnum.vetor) {
+                        }
+                        if (this.subCategoria == SubCategoriaEnum.vetor) {
                             tipo = new TipoDeVariavel(TipoDeVariavelEnum.VETOR, numeroDeElementos, this.tipoAtualTipoPreDefinido);
                             this.variavelAux.setTipoDeVariavel(tipo);
                             desloc += numeroDeElementos;
                         }
 
                     }
+                    pos++;
                 } while (pos != this.ultimoID);
                 deslocamento.push(desloc);
                 break;
